@@ -50,4 +50,13 @@
         android:layout_centerHorizontal="true"
         android:textSize="32sp"
         android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/login_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Login with Spotify"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/tpButton"
+        android:layout_marginTop="20dp"/>
 </RelativeLayout>

@@ -72,7 +72,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(files("D:/android-sdk/app-remote-lib/spotify-app-remote-release-0.8.0.aar"))
     // Adding Spotify dependencies
-    //implementation(libs.spotify.auth)
+    implementation(libs.spotify.auth)
+    implementation(libs.gson)
     //implementation(libs.spotify.player)
 }
 

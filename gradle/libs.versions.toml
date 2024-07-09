@@ -34,7 +34,8 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 # Adding Spotify SDK dependencies
-#spotify-auth = { group = "com.spotify.android", name = "auth", version = "1.2.5" }
+gson = { group = "com.google.code.gson", name = "gson", version = "2.10.1" }
+spotify-auth = { group = "com.spotify.android", name = "auth", version = "1.2.6" }
 #spotify-player = { group = "com.spotify.sdk", name = "spotify-player", version = "2.20b-3a11f8e" }
 
 [plugins]

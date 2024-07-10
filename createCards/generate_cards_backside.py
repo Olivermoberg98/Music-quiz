@@ -41,10 +41,24 @@ A4_WIDTH = mm_to_pixels(A4_WIDTH_MM)
 A4_HEIGHT = mm_to_pixels(A4_HEIGHT_MM)
 SPACE = mm_to_pixels(SPACE_MM)
 
+# Load font
+def load_font(size):
+    try:
+        return ImageFont.truetype("arial.ttf", size)
+    except IOError:
+        return ImageFont.load_default()
+
 # Create a new image for a playing card
-def create_card_image(qr_image_filename):
+def create_card_image(qr_image_filename, card_number):
     card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), (36, 36, 36))
     draw = ImageDraw.Draw(card)
+
+    font_size_number = 12  # Font size for the card number
+    font_number = load_font(font_size_number)
+
+    # Function to calculate text width and height
+    def get_text_size(text, font):
+        return draw.textlength(text, font=font), draw.textbbox((0, 0), text, font=font)[3]
 
     # Define dimensions for the square where the QR code will go
     qr_size = int(min(CARD_WIDTH, CARD_HEIGHT) * 0.6)  # Convert to integer
@@ -57,6 +71,14 @@ def create_card_image(qr_image_filename):
         card.paste(qr_image, qr_position)
     except FileNotFoundError:
         print(f"QR code image file {qr_image_filename} not found. QR code will not be added.")
+
+        # Draw card number if provided
+    if (card_number - 1) % 9 == 0:
+        number_text = str(card_number)
+        number_width, number_height = get_text_size(number_text, font_number)
+        number_x = CARD_WIDTH - number_width - 10  # 10 pixels from right edge
+        number_y = CARD_HEIGHT - number_height - 10  # 10 pixels from bottom edge
+        draw.text((number_x, number_y), number_text, font=font_number, fill='black')
 
     # Save the card image
     return card
@@ -84,21 +106,37 @@ def arrange_cards_on_a4(output_folder, qr_image_folder):
         end_idx = min(start_idx + cards_per_page, num_cards)
         cards_to_print = qr_image_files[start_idx:end_idx]
 
-        # Place cards in rows and columns on this page
+        # Determine the number of cards per row and column
+        num_cols = int((A4_WIDTH + SPACE) / (CARD_WIDTH + SPACE))
+        num_rows = int((A4_HEIGHT + SPACE) / (CARD_HEIGHT + SPACE))
+
+        # Place cards in rows and columns on this page, starting from top-right
         for idx, qr_image_file in enumerate(cards_to_print):
-            row = idx // int(cards_per_page ** 0.5)
-            col = idx % int(cards_per_page ** 0.5)
-            x = int(col * (CARD_WIDTH + SPACE))
-            y = int(A4_HEIGHT - (row + 1) * (CARD_HEIGHT + SPACE))
-            card_image = create_card_image(os.path.join(qr_image_folder, qr_image_file))
+            # Calculate row and column for right-to-left placement
+            row = idx // num_cols
+            col = idx % int(A4_WIDTH / (CARD_WIDTH + SPACE))
+            
+            # Calculate x and y coordinates for card placement
+            
+            x = int(A4_WIDTH - (col + 1) * CARD_WIDTH - col*SPACE)
+            y = int(A4_HEIGHT - (row + 1) * CARD_HEIGHT  - row*SPACE)
+
+            # Calculate card number for display
+            card_number = start_idx + idx + 1
+            
+            # Create card image with QR code
+            card_image = create_card_image(os.path.join(qr_image_folder, qr_image_file), card_number)
+            
+            # Draw the card image onto the canvas
             c.drawInlineImage(card_image, x, y, width=CARD_WIDTH, height=CARD_HEIGHT)
 
+        # Save the PDF for this page
         c.save()
         print(f"Saved {output_pdf_filename}")
 
 # Create a playing card image with QR code from a folder
-def create_card_with_qr_image(qr_image_folder='qrcode_images_hitster_v0'):
-    output_folder = 'A4_backside_hitster_v0'
+def create_card_with_qr_image(qr_image_folder='qrcode_images_hitster_svenska_latar_v0'):
+    output_folder = 'A4_backside_hitster_svenska_latar_v0'
     os.makedirs(output_folder, exist_ok=True)
     arrange_cards_on_a4(output_folder, qr_image_folder)
 

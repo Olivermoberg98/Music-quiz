@@ -55,7 +55,7 @@ def load_font(size):
         return ImageFont.load_default()
 
 # Create a new image for a playing card
-def create_card_image(song_name, release_year, artist):
+def create_card_image(song_name, release_year, artist, card_number=None):
     card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), (36, 36, 36))
     draw = ImageDraw.Draw(card)
     
@@ -66,9 +66,11 @@ def create_card_image(song_name, release_year, artist):
     font_size_artist = 20
     font_size_year = 40
     font_size_song = 20
+    font_size_number = 12  # Font size for the card number
     font_artist = load_font(font_size_artist)
     font_year = load_font(font_size_year)
     font_song_name = load_font(font_size_song)
+    font_number = load_font(font_size_number)
     
     # Define vertical positions of the boxes
     top_position = int(CARD_HEIGHT * 0.2)
@@ -104,10 +106,17 @@ def create_card_image(song_name, release_year, artist):
     draw_rounded_rectangle(box_x, bottom_position, box_width, box_height, radius=10, fill=(255, 255, 255))
     text_width, text_height = get_text_size(artist, font_artist)
     draw.text((box_x + (box_width - text_width) // 2, bottom_position + (box_height - text_height) // 2), artist, font=font_artist, fill='black')
+
+    # Draw card number if provided
+    if (card_number - 1) % 9 == 0:
+        number_text = str(card_number)
+        number_width, number_height = get_text_size(number_text, font_number)
+        number_x = CARD_WIDTH - number_width - 10  # 10 pixels from right edge
+        number_y = CARD_HEIGHT - number_height - 10  # 10 pixels from bottom edge
+        draw.text((number_x, number_y), number_text, font=font_number, fill='black')
     
     # Save the card image
     return card
-
 
 
 # Arrange cards on A4 sheets with spacing and multiple pages
@@ -137,13 +146,16 @@ def arrange_cards_on_a4(output_folder, data_file):
             release_year = data['Album Release Year']
             artist = data['Artist']
             
+            # Calculate card number for display
+            card_number = start_idx + i + 1
+            
             # Create the card image
-            card_image = create_card_image(song_name, release_year, artist)
+            card_image = create_card_image(song_name, release_year, artist, card_number)
             
             col = i % int(A4_WIDTH / (CARD_WIDTH + SPACE))
             row = i // int(A4_WIDTH / (CARD_WIDTH + SPACE))
             x = int(col * (CARD_WIDTH + SPACE))
-            y = int(A4_HEIGHT - (row + 1) * (CARD_HEIGHT + SPACE))
+            y = int(A4_HEIGHT - (row + 1) * CARD_HEIGHT  - row*SPACE)
             
             # Draw the card image onto the canvas
             card_image = card_image.convert("RGB")
@@ -154,9 +166,9 @@ def arrange_cards_on_a4(output_folder, data_file):
 
 # Create a playing card image from the data
 def create_card_front_side():
-    output_folder = 'A4_frontside_hitster_v0'
+    output_folder = 'A4_frontside_hitster_svenska_latar_v0'
     os.makedirs(output_folder, exist_ok=True)
-    data_file = 'Hitster_data_v0.xlsx'
+    data_file = 'Hitster_data_svenska_latar_v0.xlsx'
     arrange_cards_on_a4(output_folder, data_file)
 
 # Run the process

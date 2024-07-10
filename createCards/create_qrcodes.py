@@ -58,9 +58,9 @@ def generate_qr_codes(excel_file, url_column, output_folder):
 
 # Main function
 def main():
-    excel_file = 'Hitster_data_v0.xlsx'  # Name of the Excel file
+    excel_file = 'Hitster_data_svenska_latar_v0.xlsx'  # Name of the Excel file
     url_column = 'URL'  # Column name with URLs
-    output_folder = 'qrcode_images_hitster_v0'  # Output folder
+    output_folder = 'qrcode_images_hitster_svenska_latar_v0'  # Output folder
 
     generate_qr_codes(excel_file, url_column, output_folder)
 

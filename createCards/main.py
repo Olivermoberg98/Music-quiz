@@ -6,9 +6,9 @@ import generate_cards_backside
 import merge_PDFs
 
 def main():
-    playlist_url = 'https://open.spotify.com/playlist/6J8d6E84rS0go6ImsCfRcn?si=e18531110a164e69'
+    playlist_url = 'https://open.spotify.com/playlist/4TJgT7TE9WbJHdk12kEJvt?si=a647bdd0697541fa'
 
-    category = 'svenska_latar'
+    category = 'mixed'
     version = 'v0'
 
     # Base directory

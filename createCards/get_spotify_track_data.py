@@ -25,19 +25,14 @@ def get_playlist_tracks(playlist_uri):
             }
             tracks.append(track_info)
         
-        # Check if there are more tracks to fetch
-        if results['next']:
-            results = sp.next(results)
-            tracks.extend(results['items'])
-        else:
-            results = None
-        
-        # For more than 100 songs
-        #while results['next']:
-        #results = sp.next(results)
-        #tracks.extend(results['items'])
-        #return tracks
+        # Fetch the next page of results
+        results = sp.next(results) if results['next'] else None
 
+        # # Check if there are more tracks to fetch
+        # while results['next']:
+        #     results = sp.next(results)
+        #     tracks.extend(results['items'])
+            
     return tracks
 
 def save_to_excel(tracks, filename):

@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
 
         hitsterButton.setOnClickListener {
             val intent = Intent(this, HitsterActivity::class.java)
+            intent.putExtra("ACCESS_TOKEN", accessToken)
             startActivity(intent)
         }
 

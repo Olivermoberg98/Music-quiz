@@ -74,6 +74,8 @@ dependencies {
     // Adding Spotify dependencies
     implementation(libs.spotify.auth)
     implementation(libs.gson)
-    //implementation(libs.spotify.player)
+    implementation(libs.okhttp)
+    implementation(libs.retrofit)
+    implementation(libs.androidx.constraintlayout)
 }
 

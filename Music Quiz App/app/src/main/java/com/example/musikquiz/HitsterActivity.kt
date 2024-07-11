@@ -1,10 +1,11 @@
 package com.example.musikquiz
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -14,16 +15,25 @@ import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.client.Subscription
+import com.spotify.protocol.types.Image
 import com.spotify.protocol.types.PlayerState
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import java.io.IOException
+
 
 class HitsterActivity : ComponentActivity() {
 
     private var spotifyAppRemote: SpotifyAppRemote? = null
     private var playerStateSubscription: Subscription<PlayerState>? = null
+    private var accessToken: String? = null
 
     private lateinit var artistTextView: TextView
     private lateinit var songNameTextView: TextView
     private lateinit var releaseYearTextView: TextView
+    private lateinit var albumCoverImageView: ImageView
+    private lateinit var playPauseButton: ImageButton
 
     companion object {
         private const val CLIENT_ID = "fa6a760e4e794ecb8c642e8d3de00b50"
@@ -38,6 +48,10 @@ class HitsterActivity : ComponentActivity() {
         artistTextView = findViewById(R.id.artistTextView)
         songNameTextView = findViewById(R.id.songNameTextView)
         releaseYearTextView = findViewById(R.id.releaseYearTextView)
+        albumCoverImageView = findViewById(R.id.album_cover)
+        playPauseButton = findViewById(R.id.play_pause_button)
+
+        accessToken = intent.getStringExtra("ACCESS_TOKEN")
 
         val scanCardButton: Button = findViewById(R.id.scanCardButton)
         scanCardButton.setOnClickListener {
@@ -49,6 +63,10 @@ class HitsterActivity : ComponentActivity() {
             integrator.setOrientationLocked(true)  // Lock orientation to portrait
             integrator.setBarcodeImageEnabled(true)
             integrator.initiateScan()
+        }
+
+        playPauseButton.setOnClickListener {
+            togglePlayPause()
         }
     }
 
@@ -89,6 +107,7 @@ class HitsterActivity : ComponentActivity() {
             spotifyAppRemote?.let {
                 it.playerApi.play(uri)
                 subscribeToPlayerState()
+                fetchTrackDetails(uri)
             }
         }
     }
@@ -120,10 +139,73 @@ class HitsterActivity : ComponentActivity() {
                 if (track != null) {
                     artistTextView.text = "Artist: ${track.artist.name}"
                     songNameTextView.text = "Song: ${track.name}"
-                    //releaseYearTextView.text = "Release Year: ${track.re}"
+                    updateTrackCoverArt(playerState)
+                    updatePlayPauseButton(playerState)
                 }
             }
         }
+    }
+
+    private fun updateTrackCoverArt(playerState: PlayerState) {
+        spotifyAppRemote?.imagesApi
+            ?.getImage(playerState.track.imageUri, Image.Dimension.LARGE)
+            ?.setResultCallback { bitmap ->
+                albumCoverImageView.setImageBitmap(bitmap)
+            }
+    }
+
+    private fun updatePlayPauseButton(playerState: PlayerState) {
+        if (playerState.isPaused) {
+            playPauseButton.setImageResource(R.drawable.ic_play)  // Set to play icon if paused
+        } else {
+            playPauseButton.setImageResource(R.drawable.ic_pause)  // Set to pause icon if playing
+        }
+    }
+
+    private fun togglePlayPause() {
+        spotifyAppRemote?.playerApi?.playerState?.setResultCallback { playerState ->
+            if (playerState.isPaused) {
+                spotifyAppRemote?.playerApi?.resume()
+                playPauseButton.setImageResource(R.drawable.ic_pause)  // Update to pause icon
+            } else {
+                spotifyAppRemote?.playerApi?.pause()
+                playPauseButton.setImageResource(R.drawable.ic_play)  // Update to play icon
+            }
+        }
+    }
+
+    private fun fetchTrackDetails(uri: String) {
+        val trackId = uri.split(":").last()
+        val url = "https://api.spotify.com/v1/tracks/$trackId"
+
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer $accessToken")  // Use the valid access token
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                Log.e(TAG, "Failed to fetch track details", e)
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (!response.isSuccessful) {
+                    Log.e(TAG, "Failed to fetch track details: ${response.code}")
+                    return
+                }
+
+                val responseBody = response.body?.string()
+                if (responseBody != null) {
+                    val jsonObject = JSONObject(responseBody)
+                    val releaseDate = jsonObject.getJSONObject("album").getString("release_date")
+
+                    runOnUiThread {
+                        releaseYearTextView.text = "Release Year: ${releaseDate.substring(0, 4)}"
+                    }
+                }
+            }
+        })
     }
 
     override fun onStop() {

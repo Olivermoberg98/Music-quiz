@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import os
+from PIL import Image, ImageDraw, ImageFont
 
 # Function to install a package using pip
 def install_package(package):
@@ -12,21 +13,6 @@ try:
 except ImportError:
     install_package('Pillow')
     from PIL import Image, ImageDraw, ImageFont
-
-try:
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import A4
-except ImportError:
-    install_package('reportlab')
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import A4
-
-try:
-    import pandas as pd
-except ImportError:
-    install_package('pandas')
-    import pandas as pd
-
 
 # Define DPI (dots per inch)
 DPI = 300
@@ -92,10 +78,6 @@ def create_card_image(song_name, release_year, artist, song_icon_path, artist_ic
     font_song_name = load_font(font_size_song)
     font_number = load_font(font_size_number)
 
-    # Function to calculate text width and height
-    def get_text_size(text, font):
-        return draw.textlength(text, font=font), draw.textbbox((0, 0), text, font=font)[3]
-
     # Load icons
     song_icon = Image.open(song_icon_path).convert("RGBA")
     artist_icon = Image.open(artist_icon_path).convert("RGBA")
@@ -141,9 +123,9 @@ def create_card_image(song_name, release_year, artist, song_icon_path, artist_ic
     card.paste(artist_icon, ((CARD_WIDTH - artist_icon_size) // 2, bottom_position - artist_icon_size - 10), artist_icon)
     
     # Draw Card Number if provided
-    if (card_number - 1) % 9 == 0:
+    if card_number is not None:
         number_text = str(card_number)
-        number_width, number_height = get_text_size(number_text, font_number)
+        number_width, number_height = draw.textbbox((0, 0), number_text, font=font_number)[2:4]
         number_x = CARD_WIDTH - number_width - 10  # 10 pixels from right edge
         number_y = CARD_HEIGHT - number_height - 10  # 10 pixels from bottom edge
         draw.text((number_x, number_y), number_text, font=font_number, fill='white')
@@ -151,59 +133,25 @@ def create_card_image(song_name, release_year, artist, song_icon_path, artist_ic
     # Save the card image
     return card
 
-
-# Arrange cards on A4 sheets with spacing and multiple pages
-def arrange_cards_on_a4(output_folder, data_file):
-    # Read the data from Excel file
-    df = pd.read_excel(data_file)
-
-    # Determine the number of pages needed
-    num_cards = len(df)
-    cards_per_page = int((A4_WIDTH + SPACE) / (CARD_WIDTH + SPACE)) * int((A4_HEIGHT + SPACE) / (CARD_HEIGHT + SPACE))
-    num_pages = (num_cards + cards_per_page - 1) // cards_per_page
-
+# Generate and save a single card layout
+def create_test_layout():
+    # Sample data for testing
+    song_name = "Här kommer alla känslorna"
+    release_year = 1985
+    artist = "London Symphony Orchestra"
+    card_number = 1
+    
     # Paths to icons
     song_icon_path = "song_icon.png"
     artist_icon_path = "artist_icon.png"
 
-    # Generate each page
-    for page_num in range(num_pages):
-        output_pdf_filename = os.path.join(output_folder, f'playing_cards_page_{page_num + 1}.pdf')
-        c = canvas.Canvas(output_pdf_filename, pagesize=(A4_WIDTH, A4_HEIGHT))
+    # Create the card image
+    card_image = create_card_image(song_name, release_year, artist, song_icon_path, artist_icon_path, card_number)
+    
+    # Save the image
+    card_image_filename = 'test_card_layout.png'
+    card_image.save(card_image_filename)
+    print(f"Saved {card_image_filename}")
 
-        # Calculate the range of cards for this page
-        start_idx = page_num * cards_per_page
-        end_idx = min(start_idx + cards_per_page, num_cards)
-        df_page = df.iloc[start_idx:end_idx]
-
-        # Place cards in rows and columns on this page
-        for i, row in enumerate(df_page.iterrows()):
-            _, data = row
-            song_name = data['Song Name']
-            release_year = data['Album Release Year']
-            artist = data['Artist']
-            
-            # Calculate card number for display
-            card_number = start_idx + i + 1
-            
-            # Create the card image
-            card_image = create_card_image(song_name, release_year, artist, song_icon_path, artist_icon_path, card_number)
-            
-            col = i % int(A4_WIDTH / (CARD_WIDTH + SPACE))
-            row = i // int(A4_WIDTH / (CARD_WIDTH + SPACE))
-            x = int(col * (CARD_WIDTH + SPACE))
-            y = int(A4_HEIGHT - (row + 1) * CARD_HEIGHT  - row*SPACE)
-            
-            # Draw the card image onto the canvas
-            card_image = card_image.convert("RGB")
-            c.drawInlineImage(card_image, x, y, width=CARD_WIDTH, height=CARD_HEIGHT)
-
-        c.save()
-        print(f"Saved {output_pdf_filename}")
-
-def generate_frontside_images(output_folder, data_file):
-    os.makedirs(output_folder, exist_ok=True)
-    arrange_cards_on_a4(output_folder, data_file)
-
-#if __name__ == '__main__':
-#    generate_frontside_images('frontside_images_hitster_svenska_latar_v0', 'Hitster_data_svenska_latar_v0.xlsx')
+# Run the process
+create_test_layout()

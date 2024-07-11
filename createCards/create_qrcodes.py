@@ -56,13 +56,8 @@ def generate_qr_codes(excel_file, url_column, output_folder):
         img.save(file_path)
         print(f'Saved {file_path}')
 
-# Main function
-def main():
-    excel_file = 'Hitster_data_svenska_latar_v0.xlsx'  # Name of the Excel file
-    url_column = 'URL'  # Column name with URLs
-    output_folder = 'qrcode_images_hitster_svenska_latar_v0'  # Output folder
+def create_qr_images(excel_file, output_folder):
+    generate_qr_codes(excel_file, 'URL', output_folder)
 
-    generate_qr_codes(excel_file, url_column, output_folder)
-
-if __name__ == '__main__':
-    main()
+#if __name__ == '__main__':
+#    create_qr_images('Hitster_data_svenska_latar_v0.xlsx', 'qrcode_images_hitster_svenska_latar_v0')

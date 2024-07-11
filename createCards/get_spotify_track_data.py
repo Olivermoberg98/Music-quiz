@@ -47,14 +47,10 @@ def save_to_excel(tracks, filename):
     # Save DataFrame to Excel file
     df.to_excel(filename, index=False)
 
-def main():
-    playlist_url = 'https://open.spotify.com/playlist/6J8d6E84rS0go6ImsCfRcn?si=e18531110a164e69'  # Replace with your playlist URI
-    output_file = 'Hitster_data_svenska_latar_v0.xlsx'
-    
-    # Get playlist tracks and save to Excel
+def fetch_and_save_spotify_data(playlist_url, output_file):
     tracks = get_playlist_tracks(playlist_url)
     save_to_excel(tracks, output_file)
     print(f"Saved {len(tracks)} tracks to {output_file}")
 
-if __name__ == '__main__':
-    main()
+#if __name__ == '__main__':
+    #fetch_and_save_spotify_data('https://open.spotify.com/playlist/6J8d6E84rS0go6ImsCfRcn?si=e18531110a164e69', 'Hitster_data_svenska_latar_v0.xlsx')

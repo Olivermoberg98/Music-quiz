@@ -47,10 +47,17 @@ def load_font(size):
         return ImageFont.truetype("arial.ttf", size)
     except IOError:
         return ImageFont.load_default()
+    
+# Create a rounded rectangle mask
+def create_rounded_rectangle_mask(size, radius):
+    mask = Image.new('L', size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rounded_rectangle((0, 0, size[0], size[1]), radius, fill=255)
+    return mask
 
 # Create a new image for a playing card
 def create_card_image(qr_image_filename, card_number):
-    card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), (36, 36, 36))
+    card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), (255, 192, 203))
     draw = ImageDraw.Draw(card)
 
     font_size_number = 12  # Font size for the card number
@@ -61,16 +68,27 @@ def create_card_image(qr_image_filename, card_number):
         return draw.textlength(text, font=font), draw.textbbox((0, 0), text, font=font)[3]
 
     # Define dimensions for the square where the QR code will go
-    qr_size = int(min(CARD_WIDTH, CARD_HEIGHT) * 0.6)  # Convert to integer
-    qr_position = (int((CARD_WIDTH - qr_size) // 2), int((CARD_HEIGHT - qr_size) // 2))  # Convert to integer
+    qr_size = int(min(CARD_WIDTH, CARD_HEIGHT) * 0.6)
+    qr_position = (int((CARD_WIDTH - qr_size) // 2), int((CARD_HEIGHT - qr_size) // 2))
 
-    # Draw the QR code image on the card
+    # Draw the QR code image on the card with rounded edges
     try:
-        qr_image = Image.open(qr_image_filename)
-        qr_image = qr_image.resize((qr_size, qr_size))  # Resize the QR image to fit
-        card.paste(qr_image, qr_position)
+        qr_image = Image.open(qr_image_filename).convert("RGBA")
+        qr_image = qr_image.resize((qr_size, qr_size))
+
+        # Create a mask with rounded edges
+        radius = 20  # Radius for rounded corners
+        mask = create_rounded_rectangle_mask((qr_size, qr_size), radius)
+
+        # Create a new image for the QR code with rounded edges
+        qr_image_with_rounded_corners = Image.new("RGBA", (qr_size, qr_size))
+        qr_image_with_rounded_corners.paste(qr_image, (0, 0), mask)
+
+        # Paste the rounded QR code onto the card
+        card.paste(qr_image_with_rounded_corners, qr_position, qr_image_with_rounded_corners)
     except FileNotFoundError:
         print(f"QR code image file {qr_image_filename} not found. QR code will not be added.")
+
 
         # Draw card number if provided
     if (card_number - 1) % 9 == 0:
@@ -78,7 +96,7 @@ def create_card_image(qr_image_filename, card_number):
         number_width, number_height = get_text_size(number_text, font_number)
         number_x = CARD_WIDTH - number_width - 10  # 10 pixels from right edge
         number_y = CARD_HEIGHT - number_height - 10  # 10 pixels from bottom edge
-        draw.text((number_x, number_y), number_text, font=font_number, fill='black')
+        draw.text((number_x, number_y), number_text, font=font_number, fill='white')
 
     # Save the card image
     return card
@@ -135,12 +153,9 @@ def arrange_cards_on_a4(output_folder, qr_image_folder):
         print(f"Saved {output_pdf_filename}")
 
 # Create a playing card image with QR code from a folder
-def create_card_with_qr_image(qr_image_folder='qrcode_images_hitster_svenska_latar_v0'):
-    output_folder = 'A4_backside_hitster_svenska_latar_v0'
+def generate_backside_images(qr_image_folder, output_folder):
     os.makedirs(output_folder, exist_ok=True)
     arrange_cards_on_a4(output_folder, qr_image_folder)
 
-# Run the process
-create_card_with_qr_image()
-
-print("PDF created successfully.")
+#if __name__ == '__main__':
+#    generate_backside_images('qrcode_images_hitster_svenska_latar_v0', 'A4_backside_hitster_svenska_latar_v0')

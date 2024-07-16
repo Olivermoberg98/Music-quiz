@@ -14,6 +14,16 @@ except ImportError:
     install_package('Pillow')
     from PIL import Image, ImageDraw, ImageFont
 
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+except ImportError:
+    install_package('reportlab')
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+
 # Define DPI (dots per inch)
 DPI = 300
 
@@ -27,10 +37,10 @@ A4_WIDTH_MM, A4_HEIGHT_MM = 210, 297  # A4 size
 SPACE_MM = 2  # Space between cards in millimeters
 
 # Convert dimensions to pixels
+A4_WIDTH = int(A4_WIDTH_MM * mm)
+A4_HEIGHT = int(A4_HEIGHT_MM * mm)
 CARD_WIDTH = mm_to_pixels(CARD_WIDTH_MM)
 CARD_HEIGHT = mm_to_pixels(CARD_HEIGHT_MM)
-A4_WIDTH = mm_to_pixels(A4_WIDTH_MM)
-A4_HEIGHT = mm_to_pixels(A4_HEIGHT_MM)
 SPACE = mm_to_pixels(SPACE_MM)
 
 # Load font
@@ -69,9 +79,9 @@ def create_card_image(song_name, release_year, artist, song_icon_path, artist_ic
     draw = ImageDraw.Draw(card)
     
     # Define font sizes
-    font_size_artist = 40
-    font_size_year = 120
-    font_size_song = 40
+    font_size_artist = 55
+    font_size_year = 140
+    font_size_song = 55
     font_size_number = 12  # Font size for the card number
     font_artist = load_font(font_size_artist)
     font_year = load_font(font_size_year)

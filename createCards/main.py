@@ -6,7 +6,7 @@ import generate_cards_backside
 import merge_PDFs
 
 def main():
-    playlist_url = 'https://open.spotify.com/playlist/4TJgT7TE9WbJHdk12kEJvt?si=a647bdd0697541fa'
+    playlist_url = 'https://open.spotify.com/playlist/4TJgT7TE9WbJHdk12kEJvt?si=b64c7c9988884b5d'
 
     category = 'mixed'
     version = 'v0'
@@ -32,17 +32,17 @@ def main():
     # Step 1: Fetch and save Spotify data
     get_spotify_track_data.fetch_and_save_spotify_data(playlist_url, output_excel)
 
-    # Step 2: Create QR codes
-    create_qrcodes.create_qr_images(output_excel, qrcode_output_folder)
+    # # Step 2: Create QR codes
+    # create_qrcodes.create_qr_images(output_excel, qrcode_output_folder)
 
-    # Step 3: Generate frontside images for the cards
-    generate_cards_frontside.generate_frontside_images(frontside_output_folder, output_excel)
+    # # Step 3: Generate frontside images for the cards
+    # generate_cards_frontside.generate_frontside_images(frontside_output_folder, output_excel)
 
-    # Step 4: Generate frontside images for the cards
-    generate_cards_backside.generate_backside_images(qrcode_output_folder, backside_output_folder)
+    # # Step 4: Generate frontside images for the cards
+    # generate_cards_backside.generate_backside_images(qrcode_output_folder, backside_output_folder)
 
-    # Step 5: Merge PDFs
-    merge_PDFs.merge_pdfs(frontside_output_folder, backside_output_folder,merged_output_folder)
+    # # Step 5: Merge PDFs
+    # merge_PDFs.merge_pdfs(frontside_output_folder, backside_output_folder,merged_output_folder)
 
 if __name__ == '__main__':
     main()

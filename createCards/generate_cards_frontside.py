@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import os
+import math
 
 # Function to install a package using pip
 def install_package(package):
@@ -16,10 +17,12 @@ except ImportError:
 try:
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
 except ImportError:
     install_package('reportlab')
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
 
 try:
     import pandas as pd
@@ -38,14 +41,17 @@ def mm_to_pixels(mm):
 # Dimensions in millimeters
 CARD_WIDTH_MM, CARD_HEIGHT_MM = 63.5, 88.9  # Typical playing card size
 A4_WIDTH_MM, A4_HEIGHT_MM = 210, 297  # A4 size
-SPACE_MM = 2  # Space between cards in millimeters
+SPACE_MM = 1  # Space between cards in millimeters
 
-# Convert dimensions to pixels
+# Convert dimensions to points
+A4_WIDTH = int(A4_WIDTH_MM * mm)
+A4_HEIGHT = int(A4_HEIGHT_MM * mm)
 CARD_WIDTH = mm_to_pixels(CARD_WIDTH_MM)
 CARD_HEIGHT = mm_to_pixels(CARD_HEIGHT_MM)
-A4_WIDTH = mm_to_pixels(A4_WIDTH_MM)
-A4_HEIGHT = mm_to_pixels(A4_HEIGHT_MM)
 SPACE = mm_to_pixels(SPACE_MM)
+CARD_WIDTH_POINTS = int(CARD_WIDTH_MM * mm)
+CARD_HEIGHT_POINTS = int(CARD_HEIGHT_MM * mm)
+SPACE_POINTS = math.floor(SPACE_MM * mm)
 
 # Load font
 def load_font(size):
@@ -83,9 +89,9 @@ def create_card_image(song_name, release_year, artist, song_icon_path, artist_ic
     draw = ImageDraw.Draw(card)
     
     # Define font sizes
-    font_size_artist = 40
-    font_size_year = 120
-    font_size_song = 40
+    font_size_artist = 55
+    font_size_year = 140
+    font_size_song = 55
     font_size_number = 12  # Font size for the card number
     font_artist = load_font(font_size_artist)
     font_year = load_font(font_size_year)
@@ -159,7 +165,7 @@ def arrange_cards_on_a4(output_folder, data_file):
 
     # Determine the number of pages needed
     num_cards = len(df)
-    cards_per_page = int((A4_WIDTH + SPACE) / (CARD_WIDTH + SPACE)) * int((A4_HEIGHT + SPACE) / (CARD_HEIGHT + SPACE))
+    cards_per_page = int((A4_WIDTH + SPACE_POINTS) / (CARD_WIDTH_POINTS + SPACE_POINTS)) * int((A4_HEIGHT + SPACE_POINTS) / (CARD_HEIGHT_POINTS + SPACE_POINTS))
     num_pages = (num_cards + cards_per_page - 1) // cards_per_page
 
     # Paths to icons
@@ -189,14 +195,14 @@ def arrange_cards_on_a4(output_folder, data_file):
             # Create the card image
             card_image = create_card_image(song_name, release_year, artist, song_icon_path, artist_icon_path, card_number)
             
-            col = i % int(A4_WIDTH / (CARD_WIDTH + SPACE))
-            row = i // int(A4_WIDTH / (CARD_WIDTH + SPACE))
-            x = int(col * (CARD_WIDTH + SPACE))
-            y = int(A4_HEIGHT - (row + 1) * CARD_HEIGHT  - row*SPACE)
+            col = i % int(A4_WIDTH / (CARD_WIDTH_POINTS + SPACE_POINTS))
+            row = i // int(A4_WIDTH / (CARD_WIDTH_POINTS + SPACE_POINTS))
+            x = int(col * CARD_WIDTH_POINTS +  col*SPACE_POINTS)
+            y = int(A4_HEIGHT - (row + 1) * CARD_HEIGHT_POINTS  - row*SPACE_POINTS)
             
             # Draw the card image onto the canvas
             card_image = card_image.convert("RGB")
-            c.drawInlineImage(card_image, x, y, width=CARD_WIDTH, height=CARD_HEIGHT)
+            c.drawInlineImage(card_image, x, y, width=CARD_WIDTH_POINTS, height=CARD_HEIGHT_POINTS)
 
         c.save()
         print(f"Saved {output_pdf_filename}")

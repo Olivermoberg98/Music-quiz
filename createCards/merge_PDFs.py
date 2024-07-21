@@ -65,7 +65,36 @@ def merge_pdfs(frontside_folder, backside_folder, output_folder):
         except Exception as e:
             print(f"Error writing {output_pdf_path}: {e}")
 
-    print("All PDFs have been merged successfully.")
+    merge_all_pdfs(output_folder, os.path.join(output_folder, 'final_merged.pdf'))
+
+# Function to merge all PDFs in a folder into a single PDF
+def merge_all_pdfs(folder, output_path):
+    pdf_writer = PyPDF2.PdfWriter()
+
+    # Get a list of all PDF files in the folder
+    pdf_files = sorted(get_pdf_files(folder))
+
+    # Append each PDF to the writer object
+    for pdf_file in pdf_files:
+        pdf_file_path = os.path.join(folder, pdf_file)
+        try:
+            with open(pdf_file_path, 'rb') as f:
+                pdf_reader = PyPDF2.PdfReader(f)
+                for page_num in range(len(pdf_reader.pages)):
+                    pdf_writer.add_page(pdf_reader.pages[page_num])
+        except Exception as e:
+            print(f"Error reading {pdf_file_path}: {e}")
+            continue
+
+    # Write the combined PDF to the specified output path
+    try:
+        with open(output_path, 'wb') as f:
+            pdf_writer.write(f)
+        print(f"All PDFs in {folder} have been merged into {output_path}")
+    except Exception as e:
+        print(f"Error writing {output_path}: {e}")
+
+
 
 #if __name__ == '__main__':
     #merge_pdfs(frontside_folder, backside_folder, output_folder)

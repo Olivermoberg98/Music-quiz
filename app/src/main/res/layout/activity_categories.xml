@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@drawable/window_background"
+    tools:context=".CategoriesActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Title TextView -->
+        <TextView
+            android:id="@+id/titleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Categories"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="@color/lavender"
+            android:fontFamily="@font/trajanbold"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"/>
+
+        <!-- Country Button -->
+        <Button
+            android:id="@+id/countryButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Countries"
+            android:background="@drawable/categories_button_background_1"
+            android:textColor="@android:color/black"
+            android:fontFamily="@font/trajanbold"
+            android:textSize="32sp"
+            app:layout_constraintTop_toBottomOf="@id/titleTextView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="40dp"/>
+
+        <!-- Categories Button -->
+        <Button
+            android:id="@+id/movieButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Movies"
+            android:background="@drawable/categories_button_background_2"
+            android:textColor="@android:color/black"
+            android:fontFamily="@font/trajanbold"
+            android:textSize="32sp"
+            app:layout_constraintTop_toBottomOf="@id/countryButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="25dp"/>
+
+        <!-- TP Button -->
+        <Button
+            android:id="@+id/cat3Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="2000s"
+            android:background="@drawable/categories_button_background_3"
+            android:textColor="@android:color/black"
+            android:fontFamily="@font/trajanbold"
+            android:textSize="32sp"
+            app:layout_constraintTop_toBottomOf="@id/movieButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="25dp"/>
+
+        <!-- Hitster Button -->
+        <Button
+            android:id="@+id/cat4Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Rock"
+            android:background="@drawable/categories_button_background_4"
+            android:textColor="@android:color/black"
+            android:fontFamily="@font/trajanbold"
+            android:textSize="32sp"
+            app:layout_constraintTop_toBottomOf="@id/cat3Button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="25dp"/>
+
+        <!-- Categories Button -->
+        <Button
+            android:id="@+id/cat5Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Mello"
+            android:background="@drawable/categories_button_background_5"
+            android:textColor="@android:color/black"
+            android:fontFamily="@font/trajanbold"
+            android:textSize="32sp"
+            app:layout_constraintTop_toBottomOf="@id/cat4Button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="25dp"/>
+
+        <!-- TP Button -->
+        <Button
+            android:id="@+id/cat6Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="80s &amp; 90s"
+            android:background="@drawable/categories_button_background_6"
+            android:textColor="@android:color/black"
+            android:fontFamily="@font/trajanbold"
+            android:textSize="32sp"
+            app:layout_constraintTop_toBottomOf="@id/cat5Button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="25dp"/>
+
+        <!-- Movie Title TextView -->
+        <TextView
+            android:id="@+id/answerTitleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:fontFamily="@font/trajanbold"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/lavender"
+            android:gravity="center"
+            android:textAlignment="center"
+            android:layout_gravity="center"
+            app:layout_constraintTop_toBottomOf="@id/cat6Button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="25dp"/>
+
+        <!-- Play/Pause button -->
+        <ImageButton
+            android:id="@+id/play_pause_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/answerTitleTextView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="10dp"
+            android:src="@drawable/ic_play"
+            android:contentDescription="@string/play_pause_button_desc"
+            android:background="@android:color/transparent"/>
+
+        <Button
+            android:id="@+id/resetButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Reset songs"
+            android:background="@drawable/rounded_button"
+            android:textColor="@android:color/black"
+            android:fontFamily="@font/trajanbold"
+            android:textSize="32sp"
+            app:layout_constraintTop_toBottomOf="@id/play_pause_button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="25dp"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

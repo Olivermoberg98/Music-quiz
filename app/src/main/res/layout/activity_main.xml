@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@drawable/window_background"
+    tools:context=".MainActivity">
+
+    <!-- Header TextView -->
+    <TextView
+        android:id="@+id/headerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Olivers musikquiz"
+        android:textSize="38sp"
+        android:textColor="@color/lavender"
+        android:fontFamily="@font/trajanbold"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:gravity="center"/>
+
+    <!-- Hitster Button -->
+    <Button
+        android:id="@+id/hitsterButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Hitster"
+        android:background="@drawable/rounded_button"
+        android:textColor="@android:color/black"
+        android:fontFamily="@font/trajanbold"
+        android:textSize="32sp"
+        android:layout_below="@id/headerText"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="40dp"/>
+
+    <!-- Categories Button -->
+    <Button
+        android:id="@+id/categoriesButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Categories"
+        android:background="@drawable/rounded_button"
+        android:textColor="@android:color/black"
+        android:fontFamily="@font/trajanbold"
+        android:textSize="32sp"
+        android:layout_below="@id/hitsterButton"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="25dp"/>
+
+    <!-- TP Button -->
+    <Button
+        android:id="@+id/duelButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Duel"
+        android:background="@drawable/rounded_button"
+        android:textColor="@android:color/black"
+        android:fontFamily="@font/trajanbold"
+        android:textSize="32sp"
+        android:layout_below="@id/categoriesButton"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="25dp"/>
+
+    <!-- Login Button -->
+    <Button
+        android:id="@+id/login_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Login with Spotify"
+        android:background="@drawable/rounded_button"
+        android:textColor="@android:color/black"
+        android:fontFamily="@font/trajanbold"
+        android:textSize="32sp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="25dp"/>
+</RelativeLayout>

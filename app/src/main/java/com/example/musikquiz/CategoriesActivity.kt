@@ -31,6 +31,7 @@ class CategoriesActivity : ComponentActivity() {
 
     private val songToMovieMap = HashMap<String, String>()
     private val songToCountryMap = HashMap<String, String>()
+    private val songToEuroMap = HashMap<String, String>()
     private val songToArtistMapCat3 = HashMap<String, String>()
     private val songToArtistMapCat4 = HashMap<String, String>()
     private val songToArtistMapCat5 = HashMap<String, String>()
@@ -38,6 +39,7 @@ class CategoriesActivity : ComponentActivity() {
 
     private val playedMovieSongs = mutableListOf<String>()
     private val playedCountrySongs = mutableListOf<String>()
+    private val playedEuroSongs = mutableListOf<String>()
     private val playedTwoThousandSongs = mutableListOf<String>()
     private val playedRockSongs = mutableListOf<String>()
     private val playedMelloSongs = mutableListOf<String>()
@@ -71,13 +73,15 @@ class CategoriesActivity : ComponentActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val movieMappingDeferred = async { loadSongMappings("hitster_data_movies_v0.xlsx", 3, 2) }
             val countryMappingDeferred = async { loadSongMappings("hitster_data_sprak_v0.xlsx", 3, 2) }
-            val twoThousandMappingDeferred = async { loadSongMappings("hitster_data_klassisk_v0.xlsx", 3, 0) }
+            val euroMappingDeferred = async { loadSongMappings("hitster_data_eurovision_v0.xlsx", 3, 2) }
+            val twoThousandMappingDeferred = async { loadSongMappings("hitster_data_2000_v0.xlsx", 3, 0) }
             val rockMappingDeferred = async { loadSongMappings("hitster_data_rock_v0.xlsx", 3, 0) }
             val rapMappingDeferred = async { loadSongMappings("hitster_data_melodifestivalen_v0.xlsx", 3, 0) }
             val popMappingDeferred = async { loadSongMappings("hitster_data_80s90s_v0.xlsx", 3, 0) }
 
             songToMovieMap.putAll(movieMappingDeferred.await())
             songToCountryMap.putAll(countryMappingDeferred.await())
+            songToEuroMap.putAll(euroMappingDeferred.await())
             songToArtistMapCat3.putAll(twoThousandMappingDeferred.await())
             songToArtistMapCat4.putAll(rockMappingDeferred.await())
             songToArtistMapCat5.putAll(rapMappingDeferred.await())
@@ -90,6 +94,7 @@ class CategoriesActivity : ComponentActivity() {
         }
 
         val countryButton: Button = findViewById(R.id.countryButton)
+        val euroButton: Button = findViewById(R.id.eurovisionButton)
         val movieButton: Button = findViewById(R.id.movieButton)
         val cat3Button: Button = findViewById(R.id.cat3Button)
         val cat4Button: Button = findViewById(R.id.cat4Button)
@@ -98,6 +103,7 @@ class CategoriesActivity : ComponentActivity() {
         val resetButton: Button = findViewById(R.id.resetButton)
 
         countryButton.setOnClickListener { playRandomTrack(songToCountryMap, playedCountrySongs) }
+        euroButton.setOnClickListener { playRandomTrack(songToEuroMap, playedEuroSongs) }
         movieButton.setOnClickListener { playRandomTrack(songToMovieMap, playedMovieSongs) }
         cat3Button.setOnClickListener { playRandomTrack(songToArtistMapCat3, playedTwoThousandSongs) }
         cat4Button.setOnClickListener { playRandomTrack(songToArtistMapCat4, playedRockSongs) }
@@ -212,6 +218,7 @@ class CategoriesActivity : ComponentActivity() {
         // Convert the lists to JSON strings
         val gson = Gson()
         editor.putString("playedMovieSongs", gson.toJson(playedMovieSongs))
+        editor.putString("playedMovieSongs", gson.toJson(playedEuroSongs))
         editor.putString("playedCountrySongs", gson.toJson(playedCountrySongs))
         editor.putString("playedTwoThousandSongs", gson.toJson(playedTwoThousandSongs))
         editor.putString("playedRockSongs", gson.toJson(playedRockSongs))
@@ -230,6 +237,9 @@ class CategoriesActivity : ComponentActivity() {
 
         playedMovieSongs.clear()
         playedMovieSongs.addAll(gson.fromJson(sharedPreferences.getString("playedMovieSongs", "[]"), type))
+
+        playedEuroSongs.clear()
+        playedEuroSongs.addAll(gson.fromJson(sharedPreferences.getString("playedEuroSongs", "[]"), type))
 
         playedCountrySongs.clear()
         playedCountrySongs.addAll(gson.fromJson(sharedPreferences.getString("playedCountrySongs", "[]"), type))
@@ -281,6 +291,7 @@ class CategoriesActivity : ComponentActivity() {
         // Verify mappings
         val mappingsValid = songToMovieMap.isNotEmpty() &&
                 songToCountryMap.isNotEmpty() &&
+                songToEuroMap.isNotEmpty() &&
                 songToArtistMapCat3.isNotEmpty() &&
                 songToArtistMapCat4.isNotEmpty() &&
                 songToArtistMapCat5.isNotEmpty() &&
@@ -295,6 +306,7 @@ class CategoriesActivity : ComponentActivity() {
         // Verify played songs
         val playedSongsLoaded = playedMovieSongs.isNotEmpty() ||
                 playedCountrySongs.isNotEmpty() ||
+                songToEuroMap.isNotEmpty() ||
                 playedTwoThousandSongs.isNotEmpty() ||
                 playedRockSongs.isNotEmpty() ||
                 playedMelloSongs.isNotEmpty() ||
@@ -310,6 +322,7 @@ class CategoriesActivity : ComponentActivity() {
     private fun resetPlayedSongs() {
         playedMovieSongs.clear()
         playedCountrySongs.clear()
+        playedEuroSongs.clear()
         playedTwoThousandSongs.clear()
         playedRockSongs.clear()
         playedMelloSongs.clear()

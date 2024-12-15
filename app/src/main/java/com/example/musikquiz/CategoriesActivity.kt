@@ -71,13 +71,13 @@ class CategoriesActivity : ComponentActivity() {
 
         // Load mappings concurrently
         CoroutineScope(Dispatchers.IO).launch {
-            val movieMappingDeferred = async { loadSongMappings("hitster_data_movies_v0.xlsx", 3, 2) }
+            val movieMappingDeferred = async { loadSongMappings("hitster_data_movies_v2.xlsx", 3, 2) }
             val countryMappingDeferred = async { loadSongMappings("hitster_data_sprak_v0.xlsx", 3, 2) }
             val euroMappingDeferred = async { loadSongMappings("hitster_data_eurovision_v0.xlsx", 3, 2) }
             val twoThousandMappingDeferred = async { loadSongMappings("hitster_data_2000_v0.xlsx", 3, 0) }
-            val rockMappingDeferred = async { loadSongMappings("hitster_data_rock_v0.xlsx", 3, 0) }
-            val rapMappingDeferred = async { loadSongMappings("hitster_data_melodifestivalen_v0.xlsx", 3, 0) }
-            val popMappingDeferred = async { loadSongMappings("hitster_data_80s90s_v0.xlsx", 3, 0) }
+            val rockMappingDeferred = async { loadSongMappings("hitster_data_melodifestivalen_v0.xlsx", 3, 0) }
+            val rapMappingDeferred = async { loadSongMappings("hitster_data_hip_hop_v0.xlsx", 3, 0) }
+            val popMappingDeferred = async { loadSongMappings("hitster_data_christmas_v0.xlsx", 3, 0) }
 
             songToMovieMap.putAll(movieMappingDeferred.await())
             songToCountryMap.putAll(countryMappingDeferred.await())
@@ -161,7 +161,8 @@ class CategoriesActivity : ComponentActivity() {
         val availableSongs = map.keys.filterNot { playedSongs.contains(it) }
 
         if (availableSongs.isEmpty()) {
-            Toast.makeText(this, "All songs have been played. Please reset to play again.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "All songs have been played. This category will be reset", Toast.LENGTH_LONG).show()
+            playedSongs.clear()
             return
         }
 
@@ -218,7 +219,7 @@ class CategoriesActivity : ComponentActivity() {
         // Convert the lists to JSON strings
         val gson = Gson()
         editor.putString("playedMovieSongs", gson.toJson(playedMovieSongs))
-        editor.putString("playedMovieSongs", gson.toJson(playedEuroSongs))
+        editor.putString("playedEuroSongs", gson.toJson(playedEuroSongs))
         editor.putString("playedCountrySongs", gson.toJson(playedCountrySongs))
         editor.putString("playedTwoThousandSongs", gson.toJson(playedTwoThousandSongs))
         editor.putString("playedRockSongs", gson.toJson(playedRockSongs))
@@ -304,7 +305,8 @@ class CategoriesActivity : ComponentActivity() {
         }
 
         // Verify played songs
-        val playedSongsLoaded = playedMovieSongs.isNotEmpty() ||
+        val playedSongsLoaded =
+                playedMovieSongs.isNotEmpty() ||
                 playedCountrySongs.isNotEmpty() ||
                 songToEuroMap.isNotEmpty() ||
                 playedTwoThousandSongs.isNotEmpty() ||

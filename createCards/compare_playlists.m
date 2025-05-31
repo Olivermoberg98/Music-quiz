@@ -4,7 +4,7 @@ clear all; close all; clc
 folder_paths = ["movies_v0", "movies_v1"];
 file_names = ["hitster_data_movies_v0.xlsx", "hitster_data_movies_v1.xlsx"];
 column_name_artist = "Artist";
-column_name_song = "SongName";
+column_name_song = "AlbumReleaseYear";
 
 % Initialize cell arrays to store data
 artists = cell(1, length(file_names));

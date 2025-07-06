@@ -1,8 +1,8 @@
 clear all; close all; clc
 
-folder_path = "mixed_v0";
-file_name = "hitster_data_mixed_v0.xlsx";
-column_name = "Artist";
+folder_path = "hitster_v2";
+file_name = "hitster_data_hitster_v2.xlsx";
+column_name = "Artist"; % Artist or SongName
 
 % Construct the full file path
 file_path = fullfile(folder_path, file_name);
@@ -23,7 +23,7 @@ sorted_artists = artist_counts(sortIdx, 1);
 sorted_counts = [artist_counts{sortIdx, 2}];
 
 % Display the top 3 artists with the most songs
-top_n = 5;
+top_n = 30;
 if numel(sorted_artists) < top_n
     top_n = numel(sorted_artists); % Adjust if fewer than 3 artists
 end

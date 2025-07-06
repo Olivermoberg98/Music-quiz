@@ -6,10 +6,10 @@ import generate_cards_backside
 import merge_PDFs
 
 def main():
-    playlist_url = 'https://open.spotify.com/playlist/44bfJmK0ifVO3tYLSZNRN2?si=862973fb393f4011'
+    playlist_url = 'https://open.spotify.com/playlist/6ZsNVuuP2LAyZhKv000LGV?si=ff51a0649d0d421c'
 
-    category = 'movies'
-    version = 'v1'
+    category = 'hitster'
+    version = 'v2'
 
     # Base directory
     base_dir = f'{category}_{version}'

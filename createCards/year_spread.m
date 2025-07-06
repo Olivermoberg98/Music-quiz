@@ -1,7 +1,7 @@
 clear all; close all; clc
 
-folder_path = "2000_v0";
-file_name = "hitster_data_2000_v0.xlsx";
+folder_path = "hitster_v2";
+file_name = "hitster_data_hitster_v2.xlsx";
 column_name = "AlbumReleaseYear";
 
 % Construct the full file path

@@ -60,13 +60,14 @@ class HitsterActivity : ComponentActivity() {
 
         val scanCardButton: Button = findViewById(R.id.scanCardButton)
         scanCardButton.setOnClickListener {
-            Toast.makeText(this, "Scan card button clicked", Toast.LENGTH_SHORT).show()
+            // Toast.makeText(this, "Scan card button clicked", Toast.LENGTH_SHORT).show()
             val integrator = IntentIntegrator(this)
             integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
             integrator.setPrompt("Scan a QR code")
             integrator.setCameraId(0)  // Use a specific camera of the device
             integrator.setOrientationLocked(true)  // Lock orientation to portrait
             integrator.setBarcodeImageEnabled(true)
+            integrator.setBeepEnabled(false)
             integrator.initiateScan()
         }
 
@@ -90,7 +91,7 @@ class HitsterActivity : ComponentActivity() {
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
             } else {
                 // Handle the scanned result (result.contents contains the QR code data)
-                Toast.makeText(this, "Scanned: ${result.contents}", Toast.LENGTH_LONG).show()
+                // Toast.makeText(this, "Scanned: ${result.contents}", Toast.LENGTH_LONG).show()
 
                 // Check if the scanned content is a Spotify URI
                 if (result.contents.startsWith("spotify:") || result.contents.startsWith("https://open.spotify.com/")) {

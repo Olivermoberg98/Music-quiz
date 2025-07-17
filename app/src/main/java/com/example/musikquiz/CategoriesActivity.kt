@@ -72,7 +72,7 @@ class CategoriesActivity : ComponentActivity() {
         // Load mappings concurrently
         CoroutineScope(Dispatchers.IO).launch {
             val movieMappingDeferred = async { loadSongMappings("hitster_data_rock_v0.xlsx", 3, 0) }
-            val countryMappingDeferred = async { loadSongMappings("hitster_data_sprak_v0.xlsx", 3, 2) }
+            val countryMappingDeferred = async { loadSongMappings("hitster_data_countries_v1.xlsx", 3, 2) }
             val euroMappingDeferred = async { loadSongMappings("hitster_data_eurovision_v0.xlsx", 3, 2) }
             val twoThousandMappingDeferred = async { loadSongMappings("hitster_data_2000_v0.xlsx", 3, 0) }
             val rockMappingDeferred = async { loadSongMappings("hitster_data_melodifestivalen_v0.xlsx", 3, 0) }

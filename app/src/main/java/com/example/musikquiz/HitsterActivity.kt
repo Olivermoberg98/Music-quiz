@@ -12,8 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import com.google.zxing.integration.android.IntentIntegrator
-import com.google.zxing.integration.android.IntentResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
@@ -24,7 +23,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.IOException
-
 
 class HitsterActivity : ComponentActivity() {
 
@@ -45,6 +43,23 @@ class HitsterActivity : ComponentActivity() {
         private const val TAG = "HitsterActivity"
     }
 
+    // Activity Result launcher
+    private val qrScannerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val scannedText = result.data?.getStringExtra("SCAN_RESULT")
+            if (scannedText != null) {
+                if (scannedText.startsWith("spotify:") || scannedText.startsWith("https://open.spotify.com/")) {
+                    val uri = convertToSpotifyUri(scannedText)
+                    startCountdown { openSpotify(uri) }
+                } else {
+                    Toast.makeText(this, "Not a valid Spotify link", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            Toast.makeText(this, "Scan cancelled", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_hitster)
@@ -60,15 +75,8 @@ class HitsterActivity : ComponentActivity() {
 
         val scanCardButton: Button = findViewById(R.id.scanCardButton)
         scanCardButton.setOnClickListener {
-            // Toast.makeText(this, "Scan card button clicked", Toast.LENGTH_SHORT).show()
-            val integrator = IntentIntegrator(this)
-            integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
-            integrator.setPrompt("Scan a QR code")
-            integrator.setCameraId(0)  // Use a specific camera of the device
-            integrator.setOrientationLocked(true)  // Lock orientation to portrait
-            integrator.setBarcodeImageEnabled(true)
-            integrator.setBeepEnabled(false)
-            integrator.initiateScan()
+            val intent = Intent(this, ScannerActivity::class.java)
+            qrScannerLauncher.launch(intent)
         }
 
         playPauseButton.setOnClickListener {
@@ -80,32 +88,6 @@ class HitsterActivity : ComponentActivity() {
         super.onStart()
         connectToSpotifyAppRemote {
             subscribeToPlayerState()
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        val result: IntentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
-        if (result != null) {
-            if (result.contents == null) {
-                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
-            } else {
-                // Handle the scanned result (result.contents contains the QR code data)
-                // Toast.makeText(this, "Scanned: ${result.contents}", Toast.LENGTH_LONG).show()
-
-                // Check if the scanned content is a Spotify URI
-                if (result.contents.startsWith("spotify:") || result.contents.startsWith("https://open.spotify.com/")) {
-                    val uri = convertToSpotifyUri(result.contents)
-                    // Start the countdown
-                    startCountdown {
-                        openSpotify(uri)
-                    }
-                } else {
-                    Toast.makeText(this, "Not a valid Spotify link", Toast.LENGTH_SHORT).show()
-                }
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data)
         }
     }
 
@@ -194,9 +176,9 @@ class HitsterActivity : ComponentActivity() {
 
     private fun updatePlayPauseButton(playerState: PlayerState) {
         if (playerState.isPaused) {
-            playPauseButton.setImageResource(R.drawable.ic_play)  // Set to play icon if paused
+            playPauseButton.setImageResource(R.drawable.ic_play)
         } else {
-            playPauseButton.setImageResource(R.drawable.ic_pause)  // Set to pause icon if playing
+            playPauseButton.setImageResource(R.drawable.ic_pause)
         }
     }
 
@@ -204,10 +186,10 @@ class HitsterActivity : ComponentActivity() {
         spotifyAppRemote?.playerApi?.playerState?.setResultCallback { playerState ->
             if (playerState.isPaused) {
                 spotifyAppRemote?.playerApi?.resume()
-                playPauseButton.setImageResource(R.drawable.ic_pause)  // Update to pause icon
+                playPauseButton.setImageResource(R.drawable.ic_pause)
             } else {
                 spotifyAppRemote?.playerApi?.pause()
-                playPauseButton.setImageResource(R.drawable.ic_play)  // Update to play icon
+                playPauseButton.setImageResource(R.drawable.ic_play)
             }
         }
     }
@@ -219,7 +201,7 @@ class HitsterActivity : ComponentActivity() {
         val client = OkHttpClient()
         val request = Request.Builder()
             .url(url)
-            .addHeader("Authorization", "Bearer $accessToken")  // Use the valid access token
+            .addHeader("Authorization", "Bearer $accessToken")
             .build()
 
         client.newCall(request).enqueue(object : okhttp3.Callback {

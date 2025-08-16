@@ -33,6 +33,7 @@
             android:name=".HitsterActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
+        <activity android:name=".ScannerActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

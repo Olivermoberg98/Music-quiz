@@ -1,5 +1,7 @@
+// app/src/main/java/com/example/musikquiz/CategoriesActivity.kt
 package com.example.musikquiz
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -7,6 +9,8 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.spotify.android.appremote.api.ConnectionParams
@@ -14,102 +18,99 @@ import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.lifecycle.lifecycleScope
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import java.io.InputStream
-import kotlin.random.Random
-import kotlinx.coroutines.*
 
 class CategoriesActivity : ComponentActivity() {
 
     private var spotifyAppRemote: SpotifyAppRemote? = null
-    private var accessToken: String? = null
     private var playerStateSubscription: Subscription<PlayerState>? = null
 
-    private val songToMovieMap = HashMap<String, String>()
-    private val songToCountryMap = HashMap<String, String>()
-    private val songToEuroMap = HashMap<String, String>()
-    private val songToArtistMapCat3 = HashMap<String, String>()
-    private val songToArtistMapCat4 = HashMap<String, String>()
-    private val songToArtistMapCat5 = HashMap<String, String>()
-    private val songToArtistMapCat6 = HashMap<String, String>()
+    private val categoryMappings = HashMap<String, Map<String, String>>()
+    private val playedSongsMap = HashMap<String, MutableList<String>>()
 
-    private val playedMovieSongs = mutableListOf<String>()
-    private val playedCountrySongs = mutableListOf<String>()
-    private val playedEuroSongs = mutableListOf<String>()
-    private val playedTwoThousandSongs = mutableListOf<String>()
-    private val playedRockSongs = mutableListOf<String>()
-    private val playedMelloSongs = mutableListOf<String>()
-    private val played80s90sSongs = mutableListOf<String>()
+    private lateinit var allCategories: List<Category>
+    private lateinit var displayedCategories: MutableList<Category>
+    private lateinit var adapter: CategoryAdapter
 
     private lateinit var answerTitleTextView: TextView
     private lateinit var playPauseButton: ImageButton
+    private lateinit var resetButton: Button
 
     companion object {
         private const val CLIENT_ID = "fa6a760e4e794ecb8c642e8d3de00b50"
         private const val REDIRECT_URI = "musikquiz://callback"
         private const val TAG = "CategoriesActivity"
+        private const val REQUIRED_CATEGORY_COUNT = 6
     }
+
+    // The six backgrounds in the same order you had before
+    private val categoryBgRes = listOf(
+        R.drawable.categories_button_background_1,
+        R.drawable.categories_button_background_2,
+        R.drawable.categories_button_background_3,
+        R.drawable.categories_button_background_4,
+        R.drawable.categories_button_background_5,
+        R.drawable.categories_button_background_6
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_categories)
 
-        playPauseButton = findViewById(R.id.play_pause_button)
-        playPauseButton.setOnClickListener {
-            togglePlayPause()
-        }
-
-        accessToken = intent.getStringExtra("ACCESS_TOKEN")
-
         answerTitleTextView = findViewById(R.id.answerTitleTextView)
+        playPauseButton = findViewById(R.id.play_pause_button)
+        resetButton = findViewById(R.id.resetButton)
 
-        loadPlayedSongs()
+        playPauseButton.setOnClickListener { togglePlayPause() }
+        resetButton.setOnClickListener { resetAllPlayedSongs() }
 
-        // Load mappings concurrently
-        CoroutineScope(Dispatchers.IO).launch {
-            val movieMappingDeferred = async { loadSongMappings("hitster_data_rock_v0.xlsx", 3, 0) }
-            val countryMappingDeferred = async { loadSongMappings("hitster_data_countries_v1.xlsx", 3, 2) }
-            val euroMappingDeferred = async { loadSongMappings("hitster_data_eurovision_v0.xlsx", 3, 2) }
-            val twoThousandMappingDeferred = async { loadSongMappings("hitster_data_2000_v0.xlsx", 3, 0) }
-            val rockMappingDeferred = async { loadSongMappings("hitster_data_melodifestivalen_v0.xlsx", 3, 0) }
-            val rapMappingDeferred = async { loadSongMappings("hitster_data_70s_v0.xlsx", 3, 0) }
-            val popMappingDeferred = async { loadSongMappings("hitster_data_80s90s_v0.xlsx", 3, 0) }
+        // RecyclerView
+        val recyclerView: RecyclerView = findViewById(R.id.categoriesRecyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        displayedCategories = mutableListOf()
+        adapter = CategoryAdapter(mutableListOf(), { category -> onCategoryClicked(category) }, categoryBgRes)
+        recyclerView.adapter = adapter
 
-            songToMovieMap.putAll(movieMappingDeferred.await())
-            songToCountryMap.putAll(countryMappingDeferred.await())
-            songToEuroMap.putAll(euroMappingDeferred.await())
-            songToArtistMapCat3.putAll(twoThousandMappingDeferred.await())
-            songToArtistMapCat4.putAll(rockMappingDeferred.await())
-            songToArtistMapCat5.putAll(rapMappingDeferred.await())
-            songToArtistMapCat6.putAll(popMappingDeferred.await())
+        val manageButton: Button = findViewById(R.id.manageCategoriesButton)
+        manageButton.setOnClickListener { showManageCategoriesDialog() }
 
-            // Now that maps are loaded, you can update the UI or do other operations as needed
-            withContext(Dispatchers.Main) {
-                verifyLoadedData()
+        // Load categories.json (IO thread)
+        lifecycleScope.launch(Dispatchers.IO) {
+            allCategories = loadCategoriesFromJson()
+
+            if (allCategories.isEmpty()) {
+                Log.e(TAG, "categories.json is empty or missing. Put categories.json in assets.")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@CategoriesActivity, "No categories found. Check assets/categories.json", Toast.LENGTH_LONG).show()
+                }
+                return@launch
             }
+
+            if (allCategories.size < REQUIRED_CATEGORY_COUNT) {
+                Log.w(TAG, "categories.json contains fewer than $REQUIRED_CATEGORY_COUNT items.")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@CategoriesActivity, "Need at least $REQUIRED_CATEGORY_COUNT categories in categories.json", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            // After loading categories, update displayed list on the main thread
+            withContext(Dispatchers.Main) {
+                if (allCategories.isEmpty()) {
+                    Toast.makeText(this@CategoriesActivity, "categories.json is empty or missing", Toast.LENGTH_LONG).show()
+                } else {
+                    updateDisplayedCategoriesFromPrefs()
+                }
+            }
+
+
+            // Load played songs (IO)
+            loadPlayedSongsFromPrefs()
         }
-
-        val countryButton: Button = findViewById(R.id.countryButton)
-        val euroButton: Button = findViewById(R.id.eurovisionButton)
-        val movieButton: Button = findViewById(R.id.movieButton)
-        val cat3Button: Button = findViewById(R.id.cat3Button)
-        val cat4Button: Button = findViewById(R.id.cat4Button)
-        val cat5Button: Button = findViewById(R.id.cat5Button)
-        val cat6Button: Button = findViewById(R.id.cat6Button)
-        val resetButton: Button = findViewById(R.id.resetButton)
-
-        countryButton.setOnClickListener { playRandomTrack(songToCountryMap, playedCountrySongs) }
-        euroButton.setOnClickListener { playRandomTrack(songToEuroMap, playedEuroSongs) }
-        movieButton.setOnClickListener { playRandomTrack(songToMovieMap, playedMovieSongs) }
-        cat3Button.setOnClickListener { playRandomTrack(songToArtistMapCat3, playedTwoThousandSongs) }
-        cat4Button.setOnClickListener { playRandomTrack(songToArtistMapCat4, playedRockSongs) }
-        cat5Button.setOnClickListener { playRandomTrack(songToArtistMapCat5, playedMelloSongs) }
-        cat6Button.setOnClickListener { playRandomTrack(songToArtistMapCat6, played80s90sSongs) }
-        resetButton.setOnClickListener { resetPlayedSongs() }
     }
 
     override fun onStart() {
@@ -136,151 +137,233 @@ class CategoriesActivity : ComponentActivity() {
         })
     }
 
-    private fun convertToSpotifyUri(link: String): String? {
-        return if (link.startsWith("https://open.spotify.com/")) {
-            val uriPart = link.split("/").last().split("?").firstOrNull()
-            uriPart?.let { "spotify:track:$it" }
-        } else {
-            // Assuming non-Spotify URLs should be handled or returned as is
-            null
-        }
-    }
+    private fun onCategoryClicked(category: Category) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val mapping = categoryMappings[category.name] ?: run {
+                val m = loadSongMappings(category.fileName, category.keyColumn, category.valueColumn)
+                categoryMappings[category.name] = m
+                m
+            }
 
-    private fun convertToSpotifyUrl(uri: String): String? {
-        return if (uri.startsWith("spotify:track:")) {
-            val uriPart = uri.split(":").lastOrNull()
-            uriPart?.let { "https://open.spotify.com/track/$it" }
-        } else {
-            // Return null if the input is not a Spotify URI
-            null
+            val playedForCategory = playedSongsMap.getOrPut(category.name) { mutableListOf() }
+
+            withContext(Dispatchers.Main) {
+                if (mapping.isEmpty()) {
+                    Toast.makeText(this@CategoriesActivity, "No songs available in this category file.", Toast.LENGTH_SHORT).show()
+                } else {
+                    playRandomTrack(mapping, playedForCategory)
+                }
+            }
         }
     }
 
     private fun playRandomTrack(map: Map<String, String>, playedSongs: MutableList<String>) {
-        // Filter out the played songs
         val availableSongs = map.keys.filterNot { playedSongs.contains(it) }
-
         if (availableSongs.isEmpty()) {
-            Toast.makeText(this, "All songs have been played. This category will be reset", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "All songs in this category have been played. Resetting that category.", Toast.LENGTH_LONG).show()
             playedSongs.clear()
             return
         }
 
-        // Select a random track URL from the available songs
         val randomTrackUrl = availableSongs.randomOrNull()
-        if (randomTrackUrl != null) {
-            val randomTrackUri = convertToSpotifyUri(randomTrackUrl)
-            if (randomTrackUri != null) {
-                // Play the selected track
-                spotifyAppRemote?.let { remote ->
-                    remote.playerApi.play(randomTrackUri)
+        if (randomTrackUrl == null) {
+            Toast.makeText(this, "No tracks available to play", Toast.LENGTH_LONG).show()
+            return
+        }
 
-                    // Cancel any previous subscription
-                    playerStateSubscription?.cancel()
-                    playerStateSubscription = null
+        val randomTrackUri = convertToSpotifyUri(randomTrackUrl)
+        if (randomTrackUri == null) {
+            Toast.makeText(this, "Invalid track URL in mapping: $randomTrackUrl", Toast.LENGTH_LONG).show()
+            return
+        }
 
-                    // Subscribe to player state updates
-                    playerStateSubscription = remote.playerApi.subscribeToPlayerState()
-                    playerStateSubscription?.setEventCallback { playerState ->
-                        val track = playerState.track
-                        Log.d(TAG, "Player state updated: $playerState")
+        spotifyAppRemote?.let { remote ->
+            remote.playerApi.play(randomTrackUri)
 
-                        if (track != null ) {
-                            val songUri = track.uri
-                            val songUrl = convertToSpotifyUrl(songUri)
-                            Log.d(TAG, "Requested URI: $randomTrackUri")
-                            Log.d(TAG, "Actual Song URI: $songUri")
+            playerStateSubscription?.cancel()
+            playerStateSubscription = null
 
-                            // Check if the track matches the one we played and hasn't been processed yet
-                            if (songUri == randomTrackUri && !playedSongs.contains(randomTrackUrl)) {
-                                val answer = map[songUrl]
-                                runOnUiThread {
-                                    answerTitleTextView.text = answer
-                                    playedSongs.add(randomTrackUrl)
-                                }
-                            }
+            playerStateSubscription = remote.playerApi.subscribeToPlayerState()
+            playerStateSubscription?.setEventCallback { playerState ->
+                val track = playerState.track
+                if (track != null) {
+                    val songUri = track.uri
+                    val songUrl = convertToSpotifyUrl(songUri)
+                    if (songUri == randomTrackUri && !playedSongs.contains(randomTrackUrl)) {
+                        val answer = map[songUrl]
+                        runOnUiThread {
+                            answerTitleTextView.text = answer ?: ""
+                            playedSongs.add(randomTrackUrl)
                         }
                     }
-                } ?: run {
-                    Toast.makeText(this@CategoriesActivity, "Failed to connect to Spotify.", Toast.LENGTH_LONG).show()
                 }
-            } else {
-                Toast.makeText(this@CategoriesActivity, "Invalid track URI.", Toast.LENGTH_LONG).show()
             }
-        } else {
-            Toast.makeText(this@CategoriesActivity, "No tracks available to play", Toast.LENGTH_LONG).show()
+        } ?: run {
+            Toast.makeText(this, "Failed to connect to Spotify.", Toast.LENGTH_LONG).show()
         }
     }
 
-    private fun savePlayedSongs() {
+    private fun convertToSpotifyUri(link: String): String? {
+        return when {
+            link.startsWith("spotify:track:") -> link
+            link.contains("open.spotify.com/track/") -> {
+                val idPart = link.split("track/").last().split("?").firstOrNull()
+                idPart?.let { "spotify:track:$it" }
+            }
+            link.startsWith("https://open.spotify.com/") -> {
+                val uriPart = link.split("/").last().split("?").firstOrNull()
+                uriPart?.let { "spotify:track:$it" }
+            }
+            else -> null
+        }
+    }
+
+    private fun convertToSpotifyUrl(uri: String): String? {
+        return when {
+            uri.startsWith("spotify:track:") -> {
+                val id = uri.split(":").lastOrNull()
+                id?.let { "https://open.spotify.com/track/$it" }
+            }
+            uri.startsWith("https://open.spotify.com/") -> uri
+            else -> null
+        }
+    }
+
+    private fun resetAllPlayedSongs() {
+        playedSongsMap.values.forEach { it.clear() }
+        Toast.makeText(this, "Reset successful. All songs are available again for the enabled categories.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun savePlayedSongsToPrefs() {
         val sharedPreferences = getSharedPreferences("PlayedSongsPrefs", MODE_PRIVATE)
         val editor = sharedPreferences.edit()
-
-        // Convert the lists to JSON strings
         val gson = Gson()
-        editor.putString("playedMovieSongs", gson.toJson(playedMovieSongs))
-        editor.putString("playedEuroSongs", gson.toJson(playedEuroSongs))
-        editor.putString("playedCountrySongs", gson.toJson(playedCountrySongs))
-        editor.putString("playedTwoThousandSongs", gson.toJson(playedTwoThousandSongs))
-        editor.putString("playedRockSongs", gson.toJson(playedRockSongs))
-        editor.putString("playedMelloSongs", gson.toJson(playedMelloSongs))
-        editor.putString("played80s90sSongs", gson.toJson(played80s90sSongs))
-
+        for ((categoryName, list) in playedSongsMap) {
+            editor.putString("played_$categoryName", gson.toJson(list))
+        }
         editor.apply()
     }
 
-    private fun loadPlayedSongs() {
+    private fun loadPlayedSongsFromPrefs() {
         val sharedPreferences = getSharedPreferences("PlayedSongsPrefs", MODE_PRIVATE)
-
-        // Retrieve the JSON strings and convert them back to lists
         val gson = Gson()
         val type = object : TypeToken<MutableList<String>>() {}.type
 
-        playedMovieSongs.clear()
-        playedMovieSongs.addAll(gson.fromJson(sharedPreferences.getString("playedMovieSongs", "[]"), type))
+        for (cat in allCategories) {
+            val json = sharedPreferences.getString("played_${cat.name}", "[]")
+            val list: MutableList<String> = gson.fromJson(json, type)
+            playedSongsMap[cat.name] = list
+        }
+    }
 
-        playedEuroSongs.clear()
-        playedEuroSongs.addAll(gson.fromJson(sharedPreferences.getString("playedEuroSongs", "[]"), type))
+    override fun onStop() {
+        super.onStop()
+        savePlayedSongsToPrefs()
+        saveEnabledCategoriesToPrefs()
+        SpotifyAppRemote.disconnect(spotifyAppRemote)
+    }
 
-        playedCountrySongs.clear()
-        playedCountrySongs.addAll(gson.fromJson(sharedPreferences.getString("playedCountrySongs", "[]"), type))
+    private fun loadCategoriesFromJson(): List<Category> {
+        return try {
+            val input: InputStream = assets.open("categories.json")
+            val json = input.bufferedReader().use { it.readText() }
+            val gson = Gson()
+            val type = object : TypeToken<List<Category>>() {}.type
+            gson.fromJson(json, type)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load categories.json", e)
+            emptyList()
+        }
+    }
 
-        playedTwoThousandSongs.clear()
-        playedTwoThousandSongs.addAll(gson.fromJson(sharedPreferences.getString("playedTwoThousandSongs", "[]"), type))
+    private fun saveEnabledCategoriesToPrefs() {
+        val sharedPreferences = getSharedPreferences("CategoriesPrefs", MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        val enabledSet = displayedCategories.map { it.name }.toSet()
+        editor.putStringSet("enabled_categories", enabledSet)
+        editor.apply()
+    }
 
-        playedRockSongs.clear()
-        playedRockSongs.addAll(gson.fromJson(sharedPreferences.getString("playedRockSongs", "[]"), type))
+    private fun getEnabledCategoriesFromPrefs(): Set<String> {
+        val sharedPreferences = getSharedPreferences("CategoriesPrefs", MODE_PRIVATE)
+        val set = sharedPreferences.getStringSet("enabled_categories", null)
 
-        playedMelloSongs.clear()
-        playedMelloSongs.addAll(gson.fromJson(sharedPreferences.getString("playedMelloSongs", "[]"), type))
+        return if (set != null && set.isNotEmpty()) {
+            set
+        } else {
+            // Default: first 6 or fewer
+            val default = allCategories.take(REQUIRED_CATEGORY_COUNT).map { it.name }.toSet()
+            Log.d(TAG, "Defaulting enabled categories: $default")
+            default
+        }
+    }
 
-        played80s90sSongs.clear()
-        played80s90sSongs.addAll(gson.fromJson(sharedPreferences.getString("played80s90sSongs", "[]"), type))
+
+    private fun updateDisplayedCategoriesFromPrefs() {
+        val enabled = getEnabledCategoriesFromPrefs()
+        Log.d(TAG, "Enabled categories: $enabled")
+        displayedCategories.clear()
+        displayedCategories.addAll(allCategories.filter { enabled.contains(it.name) })
+        adapter.replaceAll(displayedCategories)
+
+        if (displayedCategories.isEmpty()) {
+            Toast.makeText(this, "No categories are enabled. Use Manage categories to enable 6 categories.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+
+    private fun showManageCategoriesDialog() {
+        if (allCategories.isEmpty()) {
+            Toast.makeText(this, "No categories defined.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val names = allCategories.map { it.name }.toTypedArray()
+        val enabledSet = getEnabledCategoriesFromPrefs()
+        val checked = BooleanArray(names.size) { index -> enabledSet.contains(names[index]) }
+
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Select exactly $REQUIRED_CATEGORY_COUNT categories")
+
+        builder.setMultiChoiceItems(names, checked) { _, which, isChecked ->
+            checked[which] = isChecked
+        }
+
+        builder.setNegativeButton("Cancel", null)
+
+        // Create dialog so we can override positive click (prevent dismiss if not exactly 6)
+        val dialog = builder.create()
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Save") { _, _ -> /* noop - replaced below */ }
+        dialog.show()
+
+        // override positive button click
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val newEnabled = names.filterIndexed { index, _ -> checked[index] }.toSet()
+            if (newEnabled.size != REQUIRED_CATEGORY_COUNT) {
+                Toast.makeText(this, "Please select exactly $REQUIRED_CATEGORY_COUNT categories (selected: ${newEnabled.size})", Toast.LENGTH_SHORT).show()
+            } else {
+                val prefs = getSharedPreferences("CategoriesPrefs", MODE_PRIVATE)
+                prefs.edit().putStringSet("enabled_categories", newEnabled).apply()
+                updateDisplayedCategoriesFromPrefs()
+                dialog.dismiss()
+            }
+        }
     }
 
     private suspend fun loadSongMappings(fileName: String, keyColumn: Int, valueColumn: Int): Map<String, String> {
         val map = HashMap<String, String>()
         try {
-            // Open the Excel file from assets
             val inputStream: InputStream = assets.open(fileName)
             val workbook = WorkbookFactory.create(inputStream)
             val sheet = workbook.getSheetAt(0)
-
-            // Iterate through all rows in the sheet
             for (row in sheet) {
-                // Skip header row (assuming the first row is the header)
                 if (row.rowNum == 0) continue
-
-                // Get the cell values
                 val key = row.getCell(keyColumn)?.stringCellValue?.trim()
                 val value = row.getCell(valueColumn)?.stringCellValue?.trim()
-
-                // Check if both values are not null
                 if (key != null && value != null) {
                     map[key] = value
                 }
             }
-            // Close the workbook to free resources
             workbook.close()
         } catch (e: Exception) {
             Log.e(TAG, "Error loading Excel file: $fileName", e)
@@ -288,56 +371,12 @@ class CategoriesActivity : ComponentActivity() {
         return map
     }
 
-    private fun verifyLoadedData() {
-        // Verify mappings
-        val mappingsValid = songToMovieMap.isNotEmpty() &&
-                songToCountryMap.isNotEmpty() &&
-                songToEuroMap.isNotEmpty() &&
-                songToArtistMapCat3.isNotEmpty() &&
-                songToArtistMapCat4.isNotEmpty() &&
-                songToArtistMapCat5.isNotEmpty() &&
-                songToArtistMapCat6.isNotEmpty()
-
-        if (mappingsValid) {
-            Toast.makeText(this, "Mappings Loaded Successfully", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Failed to load some mappings", Toast.LENGTH_SHORT).show()
-        }
-
-        // Verify played songs
-        val playedSongsLoaded =
-                playedMovieSongs.isNotEmpty() ||
-                playedCountrySongs.isNotEmpty() ||
-                songToEuroMap.isNotEmpty() ||
-                playedTwoThousandSongs.isNotEmpty() ||
-                playedRockSongs.isNotEmpty() ||
-                playedMelloSongs.isNotEmpty() ||
-                played80s90sSongs.isNotEmpty()
-
-        if (playedSongsLoaded) {
-            Toast.makeText(this, "Played songs loaded", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "No played songs found", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun resetPlayedSongs() {
-        playedMovieSongs.clear()
-        playedCountrySongs.clear()
-        playedEuroSongs.clear()
-        playedTwoThousandSongs.clear()
-        playedRockSongs.clear()
-        playedMelloSongs.clear()
-        played80s90sSongs.clear()
-        Toast.makeText(this, "Reset successful. All songs are available to play again.", Toast.LENGTH_SHORT).show()
-    }
-
     private fun updatePlayPauseButton() {
         spotifyAppRemote?.playerApi?.subscribeToPlayerState()?.setEventCallback { playerState ->
             if (playerState.isPaused) {
-                playPauseButton.setImageResource(R.drawable.ic_play)  // Set to play icon if paused
+                playPauseButton.setImageResource(R.drawable.ic_play)
             } else {
-                playPauseButton.setImageResource(R.drawable.ic_pause)  // Set to pause icon if playing
+                playPauseButton.setImageResource(R.drawable.ic_pause)
             }
         }
     }
@@ -346,17 +385,11 @@ class CategoriesActivity : ComponentActivity() {
         spotifyAppRemote?.playerApi?.playerState?.setResultCallback { playerState ->
             if (playerState.isPaused) {
                 spotifyAppRemote?.playerApi?.resume()
-                playPauseButton.setImageResource(R.drawable.ic_pause)  // Update to pause icon
+                playPauseButton.setImageResource(R.drawable.ic_pause)
             } else {
                 spotifyAppRemote?.playerApi?.pause()
-                playPauseButton.setImageResource(R.drawable.ic_play)  // Update to play icon
+                playPauseButton.setImageResource(R.drawable.ic_play)
             }
         }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        savePlayedSongs()
-        SpotifyAppRemote.disconnect(spotifyAppRemote)
     }
 }

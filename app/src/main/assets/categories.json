@@ -1,0 +1,16 @@
+[
+  { "name": "70s", "fileName": "hitster_data_70s_v0.xlsx", "keyColumn": 3, "valueColumn": 0 },
+  { "name": "80s & 90s", "fileName": "hitster_data_80s90s_v0.xlsx", "keyColumn": 3, "valueColumn": 0 },
+  { "name": "2000s", "fileName": "hitster_data_2000_v0.xlsx", "keyColumn": 3, "valueColumn": 0 },
+  { "name": "Christmas", "fileName": "hitster_data_christmas_v0.xlsx", "keyColumn": 3, "valueColumn": 0 },
+  { "name": "Countries", "fileName": "hitster_data_countries_v1.xlsx", "keyColumn": 3, "valueColumn": 2 },
+  { "name": "EDM", "fileName": "hitster_data_EDM_v0.xlsx", "keyColumn": 3, "valueColumn": 0 },
+  { "name": "Eurovision", "fileName": "hitster_data_eurovision_v0.xlsx", "keyColumn": 3, "valueColumn": 2 },
+  { "name": "Hip Hop", "fileName": "hitster_data_hip_hop_v0.xlsx", "keyColumn": 3, "valueColumn": 0 },
+  { "name": "House", "fileName": "hitster_data_house_v0.xlsx", "keyColumn": 3, "valueColumn": 0 },
+  { "name": "Classical", "fileName": "hitster_data_klassisk_v0.xlsx", "keyColumn": 3, "valueColumn": 0 },
+  { "name": "Mello", "fileName": "hitster_data_melodifestivalen_v0.xlsx", "keyColumn": 3, "valueColumn": 0 },
+  { "name": "Movies 1", "fileName": "hitster_data_movies_v0.xlsx", "keyColumn": 3, "valueColumn": 2 },
+  { "name": "Movies 2", "fileName": "hitster_data_movies_v2.xlsx", "keyColumn": 3, "valueColumn": 2 },
+  { "name": "Rock", "fileName": "hitster_data_rock_v0.xlsx", "keyColumn": 3, "valueColumn": 0 }
+]

@@ -56,7 +56,7 @@ SPACE_POINTS = math.floor(SPACE_MM * mm)
 # Load font
 def load_font(size):
     try:
-        return ImageFont.truetype("FontsFree-Net-lucidity-condensed.ttf", size)
+        return ImageFont.truetype("PlayfairDisplay-Bold.ttf", size)
     except IOError:
         return ImageFont.load_default()
 
@@ -85,7 +85,7 @@ def wrap_text(text, font, max_width, draw):
 
 # Create a new image for a playing card
 def create_card_image(song_name, release_year, artist, song_icon_path, artist_icon_path, card_number):
-    card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), (255, 192, 203))  # Background color
+    card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), (107, 15, 26))  # Background color
     draw = ImageDraw.Draw(card)
     
     # Define font sizes
@@ -120,7 +120,7 @@ def create_card_image(song_name, release_year, artist, song_icon_path, artist_ic
     y_position = top_position
     for line in song_lines:
         text_width, text_height = draw.textbbox((0, 0), line, font=font_song_name)[2:4]
-        draw.text(((CARD_WIDTH - text_width) // 2, y_position), line, font=font_song_name, fill=(245, 5, 85))
+        draw.text(((CARD_WIDTH - text_width) // 2, y_position), line, font=font_song_name, fill=(255, 229, 180))
         y_position += text_height + 5  # 5px space between lines
 
     # Place the song icon
@@ -132,7 +132,7 @@ def create_card_image(song_name, release_year, artist, song_icon_path, artist_ic
     y_position = middle_position
     for line in year_lines:
         text_width, text_height = draw.textbbox((0, 0), line, font=font_year)[2:4]
-        draw.text(((CARD_WIDTH - text_width) // 2, y_position), line, font=font_year, fill=(245, 5, 85))
+        draw.text(((CARD_WIDTH - text_width) // 2, y_position), line, font=font_year, fill=(255, 229, 180))
         y_position += text_height + 5
     
     # Wrap and draw Artist
@@ -140,7 +140,7 @@ def create_card_image(song_name, release_year, artist, song_icon_path, artist_ic
     y_position = bottom_position
     for line in artist_lines:
         text_width, text_height = draw.textbbox((0, 0), line, font=font_artist)[2:4]
-        draw.text(((CARD_WIDTH - text_width) // 2, y_position), line, font=font_artist, fill=(245, 5, 85))
+        draw.text(((CARD_WIDTH - text_width) // 2, y_position), line, font=font_artist, fill=(255, 229, 180))
         y_position += text_height + 5
 
     # Place the artist icon

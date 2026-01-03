@@ -64,7 +64,7 @@ def create_rounded_rectangle_mask(size, radius):
 
 # Create a new image for a playing card
 def create_card_image(qr_image_filename, card_number):
-    card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), (255, 192, 203))
+    card = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), (107, 15, 26))
     draw = ImageDraw.Draw(card)
 
     font_size_number = 12  # Font size for the card number

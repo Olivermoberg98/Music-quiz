@@ -22,5 +22,15 @@ if len(artist_counts) < top_n:
     top_n = len(artist_counts)  # Adjust if fewer than 30 artists
 
 print(f'Top {top_n} Artists with the Most Songs:')
-for artist, count in artist_counts.head(top_n).items():
-    print(f'{artist}: {count} songs')
+
+# Convert to DataFrame for easier sorting
+top_artists_df = pd.DataFrame({
+    'Artist': artist_counts.head(top_n).index,
+    'Count': artist_counts.head(top_n).values
+})
+
+# Sort by count (descending) then by artist name (alphabetically)
+top_artists_df = top_artists_df.sort_values(['Count', 'Artist'], ascending=[False, True])
+
+for _, row in top_artists_df.iterrows():
+    print(f'{row["Artist"]}: {row["Count"]} songs')

@@ -433,7 +433,7 @@ class DuelActivity : ComponentActivity() {
         teamInputContainer.visibility = View.VISIBLE
         resetButton.visibility = View.GONE
         teamDisplayContainer.visibility = View.GONE
-        songCountSpinner.visibility = View.VISIBLE
+        songCountContainer.visibility = View.VISIBLE
 
         // Reset team scores for next game
         teamScores.clear()
@@ -650,6 +650,18 @@ class DuelActivity : ComponentActivity() {
         // Clear the team display container
         teamDisplayContainer.removeAllViews()
 
+        // Reset the constraint to position below nextSongButton
+        val layoutParams = teamDisplayContainer.layoutParams as ConstraintLayout.LayoutParams
+        layoutParams.topToBottom = nextSongButton.id
+        teamDisplayContainer.layoutParams = layoutParams
+
+        // Initialize all team scores to 0 if they don't exist
+        for (teamName in teamNames) {
+            if (teamName.isNotEmpty() && !teamScores.containsKey(teamName)) {
+                teamScores[teamName] = 0
+            }
+        }
+
         // Add team display layouts for each team
         for (i in teamNames.indices) {
             addTeamDisplay(i)
@@ -666,7 +678,7 @@ class DuelActivity : ComponentActivity() {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                setMargins(30, 30, 0, 8)
+                setMargins(30, 30, 30, 8)
             }
         }
 
@@ -677,9 +689,10 @@ class DuelActivity : ComponentActivity() {
             setTextColor(ContextCompat.getColor(this@DuelActivity, android.R.color.white))
             typeface = ResourcesCompat.getFont(this@DuelActivity, R.font.trajanbold)
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
+                0,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
+                weight = 1f
                 setMargins(0, 0, 20, 0)
             }
         }
@@ -696,6 +709,8 @@ class DuelActivity : ComponentActivity() {
             ).apply {
                 setMargins(0, 0, 12, 0)
             }
+            minWidth = 60  // Ensures consistent spacing for score
+            gravity = Gravity.CENTER
         }
 
         val buttonContainer = LinearLayout(this).apply {
@@ -704,8 +719,7 @@ class DuelActivity : ComponentActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                gravity = Gravity.END
-                setMargins(0, 0, 30, 0) // Margin to the right wall
+                setMargins(0, 0, 0, 0)
             }
             setBackgroundColor(Color.TRANSPARENT)
         }
@@ -714,8 +728,8 @@ class DuelActivity : ComponentActivity() {
             LinearLayout.LayoutParams.WRAP_CONTENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         ).apply {
-            width = 108 // Adjust the width as needed
-            height = 108 // Adjust the height as needed
+            width = 108
+            height = 108
         }
 
         val incrementButton = ImageButton(this).apply {

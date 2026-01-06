@@ -17,15 +17,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import com.example.musikquiz.R
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
-import com.spotify.protocol.client.Subscription
-import com.spotify.protocol.types.PlayerState
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.spotify.protocol.types.Track
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -36,6 +32,10 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.view.Gravity
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.RelativeLayout
+import android.widget.Spinner
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
@@ -80,6 +80,8 @@ class DuelActivity : ComponentActivity() {
 
     private lateinit var teamInputContainer: LinearLayout
     private lateinit var teamDisplayContainer: LinearLayout
+    private lateinit var songCountContainer: RelativeLayout
+
 
     private lateinit var playlistId: String
     private var accessToken: String? = null
@@ -91,6 +93,9 @@ class DuelActivity : ComponentActivity() {
     private val teamScores = mutableMapOf<String, Int>()
     private val teamNameMap = mutableMapOf<EditText, Int>()
     private var teamCounter = 0
+
+    private lateinit var songCountSpinner: Spinner
+    private var totalSongs = 15
 
     companion object {
         private const val CLIENT_ID = "fa6a760e4e794ecb8c642e8d3de00b50"
@@ -110,6 +115,7 @@ class DuelActivity : ComponentActivity() {
         nextSongButton = findViewById(R.id.nextSongButton)
         finishGameButton = findViewById(R.id.finishGameButton)
         resetButton = findViewById(R.id.resetButton)
+        songCountContainer = findViewById(R.id.songCountContainer)
 
         urlEditText = findViewById(R.id.urlEditText)
         sendUrlButton = findViewById(R.id.sendUrlButton)
@@ -124,6 +130,34 @@ class DuelActivity : ComponentActivity() {
 
         findViewById<ImageButton>(R.id.removeTeamButton).setOnClickListener {
             removeTeamInput()
+        }
+
+        songCountSpinner = findViewById(R.id.songCountSpinner)
+
+        val songCounts = (1..30).toList()
+        val spinnerAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            songCounts
+        ).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+
+        songCountSpinner.adapter = spinnerAdapter
+        songCountSpinner.setSelection(songCounts.indexOf(15)) // default
+
+        songCountSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                totalSongs = songCounts[position]
+                updateSongCounter()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
         accessToken = intent.getStringExtra("ACCESS_TOKEN")
@@ -338,7 +372,7 @@ class DuelActivity : ComponentActivity() {
     }
 
     private fun playNextSong() {
-        if (songsPlayedInCurrentRound  >= 14) {
+        if (songsPlayedInCurrentRound >= totalSongs - 1) {
             nextSongButton.visibility = View.GONE
             finishGameButton.visibility = View.VISIBLE
 
@@ -363,7 +397,6 @@ class DuelActivity : ComponentActivity() {
     }
 
     private fun updateSongCounter() {
-        val totalSongs = 15 // Adjust if needed
         counterTextView.text = "$songsPlayedInCurrentRound/$totalSongs"
     }
 
@@ -380,13 +413,15 @@ class DuelActivity : ComponentActivity() {
         counterTextView.visibility = View.VISIBLE
         resetButton.visibility = View.VISIBLE
         urlInputContainer.visibility = View.GONE
-        //updateTeamNamesFromUI()
+        songCountContainer.visibility = View.GONE
         displayTeams()
-        //updateTeamLayout()
     }
 
     private fun finishGame() {
-        Toast.makeText(this, "Game Finished", Toast.LENGTH_SHORT).show()
+        showWinnerDialog()
+    }
+
+    private fun resetGameState() {
         newGameButton.visibility = View.VISIBLE
         nextSongButton.visibility = View.GONE
         finishGameButton.visibility = View.GONE
@@ -398,6 +433,68 @@ class DuelActivity : ComponentActivity() {
         teamInputContainer.visibility = View.VISIBLE
         resetButton.visibility = View.GONE
         teamDisplayContainer.visibility = View.GONE
+        songCountSpinner.visibility = View.VISIBLE
+
+        // Reset team scores for next game
+        teamScores.clear()
+        teamNames.forEach { teamScores[it] = 0 }
+    }
+
+    private fun showWinnerDialog() {
+        // Sort teams by score in descending order
+        val sortedTeams = teamScores.entries.sortedByDescending { it.value }
+
+        // Create dialog
+        val dialog = android.app.AlertDialog.Builder(this)
+
+        // Create custom view for the dialog
+        val dialogView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 48, 48, 48)
+            gravity = Gravity.CENTER
+        }
+
+        // Title
+        val titleText = TextView(this).apply {
+            text = "🏆 Game Results 🏆"
+            textSize = 28f
+            setTextColor(Color.parseColor("#C8A2C8")) // Lavender color
+            typeface = ResourcesCompat.getFont(this@DuelActivity, R.font.trajanbold)
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 32)
+        }
+        dialogView.addView(titleText)
+
+        // Display top 3 teams
+        val teamsToShow = minOf(3, sortedTeams.size)
+        for (i in 0 until teamsToShow) {
+            val team = sortedTeams[i]
+            val medal = when(i) {
+                0 -> "🥇"
+                1 -> "🥈"
+                2 -> "🥉"
+                else -> ""
+            }
+
+            val teamResultText = TextView(this).apply {
+                text = "$medal ${team.key}: ${team.value} points"
+                textSize = 22f
+                setTextColor(Color.BLACK)
+                typeface = ResourcesCompat.getFont(this@DuelActivity, R.font.trajanbold)
+                gravity = Gravity.CENTER
+                setPadding(0, 16, 0, 16)
+            }
+            dialogView.addView(teamResultText)
+        }
+
+        dialog.setView(dialogView)
+        dialog.setPositiveButton("Close") { dialogInterface, _ ->
+            dialogInterface.dismiss()
+            resetGameState()
+        }
+
+        dialog.setCancelable(false) // Prevent dismissing by clicking outside
+        dialog.show()
     }
 
     private fun startPlayingNextSong() {
@@ -454,77 +551,6 @@ class DuelActivity : ComponentActivity() {
     private fun resetPlayedSongs() {
         playedSongs.clear()
         Toast.makeText(this, "All songs have been reset", Toast.LENGTH_LONG).show()
-    }
-
-    private fun updateTeamNamesFromUI() {
-        // Clear the current teamNames to avoid duplicates
-
-
-        // Iterate over the children of the teamDisplayContainer
-        for (i in 0 until teamDisplayContainer.childCount) {
-            val teamDisplayLayout = teamDisplayContainer.getChildAt(i) as? LinearLayout
-            teamDisplayLayout?.let {
-                // Assuming team name is in the first child (TextView) of the teamDisplayLayout
-                val teamNameTextView = it.getChildAt(0) as? TextView
-                teamNameTextView?.let { textView ->
-                    val teamName = textView.text.toString()
-                    if (teamName.isNotBlank()) {
-                        teamNames.add(teamName)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun updateTeamLayout() {
-        // Get references to the necessary views
-        val teamDisplayContainer = findViewById<LinearLayout>(R.id.teamDisplayContainer)
-        val placeholderView = findViewById<View>(R.id.placeholderView)
-        val resetButton = findViewById<Button>(R.id.resetButton)
-        val nextSongButton = findViewById<Button>(R.id.nextSongButton)
-        val constraintLayout = findViewById<ConstraintLayout>(R.id.constraintLayout)
-
-        // Remove any existing layout parameters
-        placeholderView.layoutParams = placeholderView.layoutParams.apply {
-            if (this is ConstraintLayout.LayoutParams) {
-                topToBottom = ConstraintLayout.LayoutParams.UNSET
-            }
-        }
-
-        // Adjust placeholderView and resetButton based on teamDisplayContainer
-        if (teamDisplayContainer.childCount > 0) {
-            // Find the last team layout
-            val lastTeamLayout = teamDisplayContainer.getChildAt(teamDisplayContainer.childCount - 1)
-
-            if (lastTeamLayout != null) {
-                val lastTeamLayoutId = lastTeamLayout.id
-
-                // Set placeholderView to be below the last team layout
-                val placeholderParams = placeholderView.layoutParams as ConstraintLayout.LayoutParams
-                placeholderParams.topToBottom = lastTeamLayoutId
-                placeholderView.layoutParams = placeholderParams
-
-                // Show reset button
-                resetButton.visibility = View.VISIBLE
-
-                // Set resetButton to be below the placeholderView
-                val resetButtonParams = resetButton.layoutParams as ConstraintLayout.LayoutParams
-                resetButtonParams.topToBottom = placeholderView.id
-                resetButton.layoutParams = resetButtonParams
-            }
-        } else {
-            // If no teams, position placeholderView below nextSongButton
-            val placeholderParams = placeholderView.layoutParams as ConstraintLayout.LayoutParams
-            placeholderParams.topToBottom = nextSongButton.id
-            placeholderView.layoutParams = placeholderParams
-
-            // Hide reset button if no teams
-            resetButton.visibility = View.GONE
-        }
-
-        // Trigger layout update
-        placeholderView.requestLayout()
-        resetButton.requestLayout()
     }
 
     private fun addTeamInput() {
@@ -724,62 +750,6 @@ class DuelActivity : ComponentActivity() {
         teamDisplayLayout.addView(buttonContainer)
 
         teamDisplayContainer.addView(teamDisplayLayout)
-    }
-
-    private fun updateTeamScores() {
-        teamDisplayContainer.removeAllViews()
-        for ((teamName, score) in teamScores) {
-            displayTeamScore(teamName, score)
-        }
-    }
-
-    private fun displayTeamScore(teamName: String, score: Int) {
-        val scoreLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(16, 8, 16, 8)
-            }
-        }
-
-        val scoreView = TextView(this).apply {
-            text = "$teamName: $score"
-            textSize = 18f
-            setTextColor(ContextCompat.getColor(this@DuelActivity, android.R.color.black))
-            gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                weight = 1f
-            }
-        }
-
-        val incrementButton = ImageButton(this).apply {
-            setImageResource(R.drawable.ic_increment) // Correct resource for increment
-            setBackgroundResource(android.R.color.transparent)
-            setOnClickListener {
-                teamScores[teamName] = teamScores[teamName]?.plus(1) ?: 0
-                scoreView.text = "$teamName: ${teamScores[teamName]}"
-            }
-        }
-
-        val decrementButton = ImageButton(this).apply {
-            setImageResource(R.drawable.ic_decrement) // Correct resource for decrement
-            setBackgroundResource(android.R.color.transparent)
-            setOnClickListener {
-                teamScores[teamName] = teamScores[teamName]?.minus(1) ?: 0
-                scoreView.text = "$teamName: ${teamScores[teamName]}"
-            }
-        }
-
-        scoreLayout.addView(scoreView)
-        scoreLayout.addView(incrementButton)
-        scoreLayout.addView(decrementButton)
-        teamDisplayContainer.addView(scoreLayout)
     }
 
     override fun onDestroy() {

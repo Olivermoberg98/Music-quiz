@@ -44,6 +44,23 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"/>
 
+        <RelativeLayout
+            android:id="@+id/songCountContainer"
+            android:layout_width="64dp"
+            android:layout_height="48dp"
+            android:background="@drawable/rounded_button"
+            app:layout_constraintBottom_toBottomOf="@id/playPauseButton"
+            app:layout_constraintEnd_toStartOf="@id/playPauseButton"
+            app:layout_constraintTop_toTopOf="@id/playPauseButton">
+
+            <Spinner
+                android:id="@+id/songCountSpinner"
+                android:layout_width="64dp"
+                android:layout_height="48dp"
+                android:backgroundTint="@color/black"
+                android:spinnerMode="dropdown" />
+        </RelativeLayout>
+
         <ImageButton
             android:id="@+id/playPauseButton"
             android:layout_width="wrap_content"

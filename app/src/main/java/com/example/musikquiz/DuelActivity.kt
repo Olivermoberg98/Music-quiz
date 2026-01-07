@@ -94,7 +94,7 @@ class DuelActivity : ComponentActivity() {
     private val teamNameMap = mutableMapOf<EditText, Int>()
     private var teamCounter = 0
 
-    private lateinit var songCountSpinner: Spinner
+    private lateinit var songCountButton: Button
     private var totalSongs = 15
 
     companion object {
@@ -132,32 +132,10 @@ class DuelActivity : ComponentActivity() {
             removeTeamInput()
         }
 
-        songCountSpinner = findViewById(R.id.songCountSpinner)
+        songCountButton = findViewById(R.id.songCountButton)
 
-        val songCounts = (1..30).toList()
-        val spinnerAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            songCounts
-        ).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
-
-        songCountSpinner.adapter = spinnerAdapter
-        songCountSpinner.setSelection(songCounts.indexOf(15)) // default
-
-        songCountSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                totalSongs = songCounts[position]
-                updateSongCounter()
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {}
+        songCountButton.setOnClickListener {
+            showSongCountPicker()
         }
 
         accessToken = intent.getStringExtra("ACCESS_TOKEN")
@@ -403,6 +381,20 @@ class DuelActivity : ComponentActivity() {
     private fun updateSongInfo(artists: List<String>, song: String) {
         val artistNames = artists.joinToString(", ")
         songInfoButton.text = "Song: $song \n\nArtist: $artistNames"
+    }
+
+    private fun showSongCountPicker() {
+        val songCounts = (1..30).toList().map { it.toString() }.toTypedArray()
+
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle("Select number of songs")
+        builder.setItems(songCounts) { dialog, which ->
+            totalSongs = which + 1
+            songCountButton.text = totalSongs.toString()
+            updateSongCounter()
+            dialog.dismiss()
+        }
+        builder.show()
     }
 
     private fun startNewGame() {

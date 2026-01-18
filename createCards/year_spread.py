@@ -4,15 +4,18 @@ import numpy as np
 import os
 
 # Configuration
-folder_path = "hitster_v2"
-file_name = "hitster_data_hitster_v2.xlsx"
+folder_path = "hitster_v3"
+file_name = "corrected_hitster_database.csv"
 column_name = "Album Release Year"
 
 # Construct the full file path
 file_path = os.path.join(folder_path, file_name)
 
-# Read the data from the specified column in the Excel file
-data = pd.read_excel(file_path)
+# Read the data from the specified column in the Excel or CSV file
+if file_path.endswith('.xlsx') or file_path.endswith('.xls'):
+    data = pd.read_excel(file_path)
+else:
+    data = pd.read_csv(file_path)
 years_str = data[column_name]
 
 # Convert the strings to integers
